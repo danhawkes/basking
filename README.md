@@ -29,7 +29,7 @@ Sync a Grooveshark library to disk.
 <dependency>
 	<groupId>co.arcs.groove</groupId>
 	<artifactId>basking</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 </dependency>
 ```
 
