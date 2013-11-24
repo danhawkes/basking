@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-import co.arcs.groove.basking.Log;
+import co.arcs.groove.basking.Console;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
 
@@ -26,6 +26,9 @@ public class GeneratePlaylistsTask implements Callable<Void> {
 
 	@Override
 	public Void call() throws Exception {
+
+		Console.log("Generating playlists…");
+
 		StringBuilder collectionStringBuilder = new StringBuilder();
 		StringBuilder favoritesStringBuilder = new StringBuilder();
 
@@ -46,7 +49,6 @@ public class GeneratePlaylistsTask implements Callable<Void> {
 		Files.write(collectionStringBuilder.toString(), new File(syncPath, "GS Collection.m3u"),
 				Charsets.UTF_8);
 
-		Log.d("…generated playlists");
 		return null;
 	}
 

@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 
 import javax.annotation.Nullable;
 
-import co.arcs.groove.basking.Log;
+import co.arcs.groove.basking.Console;
 import co.arcs.groove.basking.SyncService;
 import co.arcs.groove.basking.Utils;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
@@ -76,6 +76,9 @@ public class BuildSyncPlanTask implements Callable<SyncPlan> {
 
 	@Override
 	public SyncPlan call() throws Exception {
+
+		Console.log("Building sync plan…");
+
 		List<AbstractSongTask> items = Lists.newArrayList();
 
 		// Only deal with mp3 files
@@ -129,9 +132,9 @@ public class BuildSyncPlanTask implements Callable<SyncPlan> {
 			download++;
 		}
 
-		Log.d(String.format(Locale.US,
-				"…built sync plan: Will download %d items, delete %d, and leave %d untouched",
-				download, delete, leave));
+		Console.logIndent(String.format(Locale.US,
+				"Will download %d items, delete %d, and leave %d untouched", download, delete,
+				leave));
 
 		return new SyncPlan(syncPlan.build());
 	}

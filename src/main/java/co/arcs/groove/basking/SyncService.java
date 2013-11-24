@@ -47,21 +47,24 @@ public class SyncService {
 	@SuppressWarnings("unchecked")
 	public ListenableFuture<SyncOutcome> start() {
 
-		Log.d("Started sync task.");
-
 		final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors
 				.newFixedThreadPool(config.numConcurrent));
 
 		// Do some clean up before starting
-		ListenableFuture<Void> createdRequiredDirectoriesFuture = exec
-				.submit(new CreateDirectoriesTask(config.syncDir, tempPath));
+		ListenableFuture<Void> createdRequiredDirectoriesFuture = (ListenableFuture<Void>) ((config.dryRun) ? Futures
+				.immediateFuture(null) : exec.submit(new CreateDirectoriesTask(config.syncDir,
+				tempPath)));
 
 		ListenableFuture<Void> deletedTemporariesFuture = Futures.transform(
 				createdRequiredDirectoriesFuture, new AsyncFunction<Void, Void>() {
 
 					@Override
 					public ListenableFuture<Void> apply(Void input) throws Exception {
-						return exec.submit(new DeleteTemporariesTask(tempPath));
+						if (config.dryRun) {
+							return Futures.immediateFuture(null);
+						} else {
+							return exec.submit(new DeleteTemporariesTask(tempPath));
+						}
 					}
 				});
 
@@ -140,8 +143,12 @@ public class SyncService {
 
 					@Override
 					public ListenableFuture<Void> apply(List<Object> input) throws Exception {
-						SyncPlan syncPlan = (SyncPlan) input.get(0);
-						return exec.submit(new GeneratePlaylistsTask(config.syncDir, syncPlan));
+						if (config.dryRun) {
+							return Futures.immediateFuture(null);
+						} else {
+							SyncPlan syncPlan = (SyncPlan) input.get(0);
+							return exec.submit(new GeneratePlaylistsTask(config.syncDir, syncPlan));
+						}
 					}
 				});
 

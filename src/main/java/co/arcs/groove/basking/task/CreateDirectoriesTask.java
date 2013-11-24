@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-import co.arcs.groove.basking.Log;
+import co.arcs.groove.basking.Console;
 
 public class CreateDirectoriesTask implements Callable<Void> {
 
@@ -18,6 +18,9 @@ public class CreateDirectoriesTask implements Callable<Void> {
 
 	@Override
 	public Void call() throws Exception {
+
+		Console.log("Creating required directories…");
+
 		syncPath.mkdirs();
 		tempPath.mkdirs();
 		if (!syncPath.exists()) {
@@ -36,7 +39,7 @@ public class CreateDirectoriesTask implements Callable<Void> {
 			throw new IOException("Temp path '" + tempPath.getAbsolutePath()
 					+ "' exists and is not a directory");
 		}
-		Log.d("…created directories");
+
 		return null;
 	}
 }

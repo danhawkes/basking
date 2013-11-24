@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import co.arcs.groove.basking.Console;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.Song;
 import co.arcs.groove.thresher.User;
@@ -37,6 +38,7 @@ public class GetSongsToSyncTask implements Callable<List<GetSongsToSyncTask.Song
 
 	@Override
 	public List<GetSongsToSyncTask.SongToSync> call() throws Exception {
+		Console.log("Getting songs to sync…");
 		User user = client.login(username, password);
 		ImmutableSet<Song> librarySongs = ImmutableSet.copyOf(user.library.get());
 		ImmutableSet<Song> favoriteSongs = ImmutableSet.copyOf(user.favorites.get());
@@ -48,6 +50,7 @@ public class GetSongsToSyncTask implements Callable<List<GetSongsToSyncTask.Song
 		for (Song s : nonfavoriteSongs) {
 			songsToSync.add(new SongToSync(s, false));
 		}
+		Console.logIndent("Found " + songsToSync.size() + " items");
 		return songsToSync;
 	}
 }

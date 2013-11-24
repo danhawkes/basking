@@ -34,7 +34,7 @@ public class Config {
 	@Parameter(
 			validateWith = PositiveInteger.class,
 			names = { "-num", "--num-concurrent" },
-			description = "Number of concurrent downloads. Defaults to 1.")
+			description = "Number of concurrent downloads.")
 	public int numConcurrent = 1;
 
 	@JsonIgnore
@@ -44,4 +44,7 @@ public class Config {
 	@JsonProperty("dryRun")
 	@Parameter(names = { "-dry", "--dry-run" }, description = "Do not modify the disk.")
 	public boolean dryRun = false;
+
+	@Parameter(names = { "-h", "--help" }, description = "Show this help.", help = true)
+	public boolean help;
 }

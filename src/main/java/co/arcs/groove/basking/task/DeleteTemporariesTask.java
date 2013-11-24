@@ -5,7 +5,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-import co.arcs.groove.basking.Log;
+import co.arcs.groove.basking.Console;
 import co.arcs.groove.basking.SyncService;
 
 public class DeleteTemporariesTask implements Callable<Void> {
@@ -18,6 +18,9 @@ public class DeleteTemporariesTask implements Callable<Void> {
 
 	@Override
 	public Void call() throws Exception {
+
+		Console.log("Deleting old temporary files…");
+
 		File[] tempFiles = tempPath.listFiles(new FilenameFilter() {
 
 			@Override
@@ -31,7 +34,6 @@ public class DeleteTemporariesTask implements Callable<Void> {
 				throw new IOException("Could not delete temp file: '" + f.getAbsolutePath() + "'");
 			}
 		}
-		Log.d("…deleted old temporary files");
 		return null;
 	}
 }

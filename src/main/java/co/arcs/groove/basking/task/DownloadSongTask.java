@@ -5,7 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import co.arcs.groove.basking.Log;
+import co.arcs.groove.basking.Console;
 import co.arcs.groove.basking.SyncService;
 import co.arcs.groove.basking.Utils;
 import co.arcs.groove.basking.task.GetSongsToSyncTask.SongToSync;
@@ -34,6 +34,8 @@ public class DownloadSongTask extends AbstractSongTask {
 
 	@Override
 	public Void call() throws Exception {
+
+		Console.log("Downloading '" + syncFile.getName() + "'…");
 
 		File tempFile = new File(tempPath, syncFile.getName() + SyncService.TEMP_FILE_EXTENSION_1);
 		File tempFile2 = new File(tempPath, syncFile.getName() + SyncService.TEMP_FILE_EXTENSION_2);
@@ -104,8 +106,6 @@ public class DownloadSongTask extends AbstractSongTask {
 		if (!tempFile2.renameTo(syncFile)) {
 			throw new IOException("Failed to move temp file: " + tempFile2.getAbsolutePath());
 		}
-
-		Log.d("…downloaded: '" + syncFile.getName() + "'");
 
 		return null;
 	}

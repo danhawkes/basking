@@ -87,13 +87,14 @@ public class Cli {
 		// Parse again, hopefully with a complete set of arguments
 		try {
 			jc.parse(args);
-			run(config);
+			run(objectMapper, config);
 		} catch (ParameterException e) {
 			exit1(jc, e);
 		}
 	}
 
-	public static void run(Config config) {
+	public static void run(ObjectMapper objectMapper, Config config) {
+		printStart(objectMapper, config);
 		ListenableFuture<SyncOutcome> serviceOutcome = new SyncService(config).start();
 		try {
 			SyncOutcome outcome = serviceOutcome.get();
@@ -107,9 +108,20 @@ public class Cli {
 		}
 	}
 
+	private static void printStart(ObjectMapper objectMapper, Config config) {
+		Console.log("Starting sync task with config:");
+		try {
+			Console.logIndent(objectMapper.writeValueAsString(config));
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+		return;
+	}
+
 	private static void printOutcome(SyncOutcome outcome) {
-		System.out.println("Finished sync task. Downloaded " + outcome.downloaded + " of "
-				+ (outcome.downloaded + outcome.failedToDownload) + " items.");
+		Console.log("Finished sync task.");
+		Console.logIndent("Downloaded " + outcome.downloaded + " of "
+				+ (outcome.downloaded + outcome.failedToDownload) + " items");
 	}
 
 	private static void exit1(JCommander jc, Exception e1) {

@@ -3,6 +3,8 @@ package co.arcs.groove.basking.task;
 import java.io.File;
 import java.io.IOException;
 
+import co.arcs.groove.basking.Console;
+
 public class DeleteSongTask extends AbstractSongTask {
 
 	private final File file;
@@ -13,6 +15,9 @@ public class DeleteSongTask extends AbstractSongTask {
 
 	@Override
 	public Void call() throws Exception {
+
+		Console.log("Deleting '" + file.getAbsolutePath() + "'…");
+
 		if (!file.delete()) {
 			throw new IOException("Failed to delete orphaned file: " + file.getAbsolutePath());
 		}
