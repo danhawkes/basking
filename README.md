@@ -16,7 +16,9 @@ Sync a Grooveshark library to disk.
 
 ## Installation
 
-### Maven
+### Java
+
+Add the following maven repository and dependency to your POM:
 
 ```xml
 <repositories>
@@ -26,14 +28,28 @@ Sync a Grooveshark library to disk.
 	</repository>
 </repositories>
 
-<dependency>
-	<groupId>co.arcs.groove</groupId>
-	<artifactId>basking</artifactId>
-	<version>1.0.1</version>
-</dependency>
+<dependencies>
+	<dependency>
+		<groupId>co.arcs.groove</groupId>
+		<artifactId>basking</artifactId>
+		<version>1.0.1</version>
+	</dependency>
+</dependencies>
 ```
 
-Alternatively, download the latest Jar [here](http://arcs.co/jenkins/job/basking/).
+Alternatively, download the latest standalone Jar [here](http://arcs.co/archiva/browse/co.arcs.groove/basking/).
+
+### Command line
+
+Get the distribution package [here](http://arcs.co/archiva/browse/co.arcs.groove/basking/). 
+
+The jar-with-dependencies and wrapper script need adding to the path. On linux that would look something like this:
+
+```bash
+unzip basking-1.0.1-dist.zip
+sudo cp -r basking-1.0.1 /usr/local/bin
+sudo ln -s -f /usr/local/bin/basking-1.0.1/basking /usr/local/bin/basking
+```
 
 ## Usage
 
@@ -52,23 +68,25 @@ ListenableFuture<SyncOutcome> outcome = service.start();
 ### Command line
 
 ```bash
-NAME
-
-basking -- Sync a grooveshark library to disk
-
-SYNOPSIS
-
- <dir> <username> <password> [-d (--dry-run)] [-h (--help)] [-n (--num-concurrent) N]
-
-DESCRIPTION
-
- <dir>                   : Directory to sync. Will be created if it does not
-                           already exist.
- <username>              : Grooveshark user name
- <password>              : Grooveshark user password
- -d (--dry-run)          : Do not modify the disk
- -h (--help)             : Show this help page
- -n (--num-concurrent) N : Number of concurrent downloads. Defaults to 1.
+Usage: basking [options]
+  Options:
+    -cfg, --config
+       JSON configuration file to load.
+    -dry, --dry-run
+       Do not modify the disk.
+       Default: false
+    -h, --help
+       Show this help.
+       Default: false
+    -num, --num-concurrent
+       Number of concurrent downloads.
+       Default: 1
+  * -pass, --password
+       Grooveshark user password.
+  * -dir, --sync-dir
+       Directory to sync. Will be created if it does not already exist.
+  * -user, --username
+       Grooveshark user name.
 ```
 
 ## Licence
