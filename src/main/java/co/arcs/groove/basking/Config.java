@@ -2,41 +2,46 @@ package co.arcs.groove.basking;
 
 import java.io.File;
 
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.validators.PositiveInteger;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Config {
 
-	@Argument(
-			metaVar = "<dir>",
-			usage = "Directory to sync. Will be created if it does not already exist.",
-			index = 0,
-			required = true)
-	public File syncPath;
+	@JsonProperty("syncDirectory")
+	@Parameter(
+			names = { "-dir", "--sync-dir" },
+			required = true,
+			description = "Directory to sync. Will be created if it does not already exist.")
+	public File syncDir;
 
-	@Argument(
-			metaVar = "<username>",
-			usage = "Grooveshark user name",
-			index = 1,
+	@JsonProperty("username")
+	@Parameter(
+			names = { "-user", "--username" },
+			description = "Grooveshark user name.",
 			required = true)
 	public String username;
 
-	@Argument(
-			metaVar = "<password>",
-			usage = "Grooveshark user password",
-			index = 2,
+	@JsonProperty("password")
+	@Parameter(
+			names = { "-pass", "--password" },
+			description = "Grooveshark user password.",
 			required = true)
 	public String password;
 
-	@Option(
-			name = "-n",
-			aliases = { "--num-concurrent" },
-			usage = "Number of concurrent downloads. Defaults to 1.")
-	public int concurrentDownloads = 1;
+	@JsonProperty("numConcurrentDownloads")
+	@Parameter(
+			validateWith = PositiveInteger.class,
+			names = { "-num", "--num-concurrent" },
+			description = "Number of concurrent downloads. Defaults to 1.")
+	public int numConcurrent = 1;
 
-	@Option(name = "-d", aliases = { "--dry-run" }, usage = "Do not modify the disk")
+	@JsonIgnore
+	@Parameter(names = { "-cfg", "--config" }, description = "JSON configuration file to load.")
+	public File configFile;
+
+	@JsonProperty("dryRun")
+	@Parameter(names = { "-dry", "--dry-run" }, description = "Do not modify the disk.")
 	public boolean dryRun = false;
-
-	@Option(name = "-h", aliases = { "--help" }, usage = "Show this help page")
-	public boolean help = false;
 }

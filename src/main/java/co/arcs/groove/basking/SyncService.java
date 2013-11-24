@@ -40,7 +40,7 @@ public class SyncService {
 
 	public SyncService(Config cli) {
 		this.config = cli;
-		this.tempPath = new File(cli.syncPath, ".gssync");
+		this.tempPath = new File(cli.syncDir, ".gssync");
 		this.client = new Client();
 	}
 
@@ -50,11 +50,11 @@ public class SyncService {
 		Log.d("Started sync task.");
 
 		final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors
-				.newFixedThreadPool(config.concurrentDownloads));
+				.newFixedThreadPool(config.numConcurrent));
 
 		// Do some clean up before starting
 		ListenableFuture<Void> createdRequiredDirectoriesFuture = exec
-				.submit(new CreateDirectoriesTask(config.syncPath, tempPath));
+				.submit(new CreateDirectoriesTask(config.syncDir, tempPath));
 
 		ListenableFuture<Void> deletedTemporariesFuture = Futures.transform(
 				createdRequiredDirectoriesFuture, new AsyncFunction<Void, Void>() {
@@ -83,7 +83,7 @@ public class SyncService {
 					@Override
 					public ListenableFuture<SyncPlan> apply(List<SongToSync> songToSync)
 							throws Exception {
-						return exec.submit(new BuildSyncPlanTask(config.syncPath, songToSync));
+						return exec.submit(new BuildSyncPlanTask(config.syncDir, songToSync));
 					}
 				});
 
@@ -141,7 +141,7 @@ public class SyncService {
 					@Override
 					public ListenableFuture<Void> apply(List<Object> input) throws Exception {
 						SyncPlan syncPlan = (SyncPlan) input.get(0);
-						return exec.submit(new GeneratePlaylistsTask(config.syncPath, syncPlan));
+						return exec.submit(new GeneratePlaylistsTask(config.syncDir, syncPlan));
 					}
 				});
 
