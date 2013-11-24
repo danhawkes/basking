@@ -32,7 +32,7 @@ Add the following maven repository and dependency to your POM:
 	<dependency>
 		<groupId>co.arcs.groove</groupId>
 		<artifactId>basking</artifactId>
-		<version>1.0.1</version>
+		<version>1.1.0</version>
 	</dependency>
 </dependencies>
 ```
@@ -46,9 +46,9 @@ Get the distribution package [here](http://arcs.co/archiva/browse/co.arcs.groove
 The jar-with-dependencies and wrapper script need adding to the path. On linux that would look something like this:
 
 ```bash
-unzip basking-1.0.1-dist.zip
-sudo cp -r basking-1.0.1 /usr/local/bin
-sudo ln -s -f /usr/local/bin/basking-1.0.1/basking /usr/local/bin/basking
+unzip basking-1.1.0-dist.zip
+sudo cp -r basking-1.1.0 /usr/local/bin
+sudo ln -s -f /usr/local/bin/basking-1.1.0/basking /usr/local/bin/basking
 ```
 
 ## Usage
