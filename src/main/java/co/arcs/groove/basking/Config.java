@@ -45,6 +45,7 @@ public class Config {
 	@Parameter(names = { "-dry", "--dry-run" }, description = "Do not modify the disk.")
 	public boolean dryRun = false;
 
+	@JsonIgnore
 	@Parameter(names = { "-h", "--help" }, description = "Show this help.", help = true)
 	public boolean help;
 }
