@@ -52,23 +52,25 @@ ListenableFuture<SyncOutcome> outcome = service.start();
 ### Command line
 
 ```bash
-NAME
-
-basking -- Sync a grooveshark library to disk
-
-SYNOPSIS
-
- <dir> <username> <password> [-d (--dry-run)] [-h (--help)] [-n (--num-concurrent) N]
-
-DESCRIPTION
-
- <dir>                   : Directory to sync. Will be created if it does not
-                           already exist.
- <username>              : Grooveshark user name
- <password>              : Grooveshark user password
- -d (--dry-run)          : Do not modify the disk
- -h (--help)             : Show this help page
- -n (--num-concurrent) N : Number of concurrent downloads. Defaults to 1.
+Usage: basking [options]
+  Options:
+    -cfg, --config
+       JSON configuration file to load.
+    -dry, --dry-run
+       Do not modify the disk.
+       Default: false
+    -h, --help
+       Show this help.
+       Default: false
+    -num, --num-concurrent
+       Number of concurrent downloads.
+       Default: 1
+  * -pass, --password
+       Grooveshark user password.
+  * -dir, --sync-dir
+       Directory to sync. Will be created if it does not already exist.
+  * -user, --username
+       Grooveshark user name.
 ```
 
 ## Licence
