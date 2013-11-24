@@ -16,7 +16,9 @@ Sync a Grooveshark library to disk.
 
 ## Installation
 
-### Maven
+### Java
+
+Add the following maven repository and dependency to your POM:
 
 ```xml
 <repositories>
@@ -26,14 +28,28 @@ Sync a Grooveshark library to disk.
 	</repository>
 </repositories>
 
-<dependency>
-	<groupId>co.arcs.groove</groupId>
-	<artifactId>basking</artifactId>
-	<version>1.0.1</version>
-</dependency>
+<dependencies>
+	<dependency>
+		<groupId>co.arcs.groove</groupId>
+		<artifactId>basking</artifactId>
+		<version>1.0.1</version>
+	</dependency>
+</dependencies>
 ```
 
-Alternatively, download the latest Jar [here](http://arcs.co/jenkins/job/basking/).
+Alternatively, download the latest standalone Jar [here](http://arcs.co/archiva/browse/co.arcs.groove/basking/).
+
+### Command line
+
+Get the distribution package [here](http://arcs.co/archiva/browse/co.arcs.groove/basking/). 
+
+The jar-with-dependencies and wrapper script need adding to the path. On linux that would look something like this:
+
+```bash
+unzip basking-1.0.1-dist.zip
+sudo cp -r basking-1.0.1 /usr/local/bin
+sudo ln -s -f /usr/local/bin/basking-1.0.1/basking /usr/local/bin/basking
+```
 
 ## Usage
 
