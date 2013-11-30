@@ -50,11 +50,12 @@ public class SyncService {
 		final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors
 				.newFixedThreadPool(config.numConcurrent));
 
-		// Do some clean up before starting
+		// Ensure sync and temp directories exist
 		ListenableFuture<Void> createdRequiredDirectoriesFuture = (ListenableFuture<Void>) ((config.dryRun) ? Futures
 				.immediateFuture(null) : exec.submit(new CreateDirectoriesTask(config.syncDir,
 				tempPath)));
 
+		// Do some clean up before starting
 		ListenableFuture<Void> deletedTemporariesFuture = Futures.transform(
 				createdRequiredDirectoriesFuture, new AsyncFunction<Void, Void>() {
 
@@ -166,7 +167,7 @@ public class SyncService {
 						return new SyncOutcome(deleted, downloaded, failedToDownload);
 					}
 				});
-
+ 
 		// Shut down executor on completion
 		Futures.addCallback(syncOutcomeFuture, new FutureCallback<SyncOutcome>() {
 
@@ -174,12 +175,12 @@ public class SyncService {
 			public void onSuccess(SyncOutcome result) {
 				exec.shutdown();
 			}
-
+			
 			@Override
 			public void onFailure(Throwable t) {
 				exec.shutdown();
 			}
-		});
+		}, MoreExecutors.sameThreadExecutor());
 
 		return syncOutcomeFuture;
 	}
