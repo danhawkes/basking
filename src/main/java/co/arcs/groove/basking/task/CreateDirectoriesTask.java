@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-import co.arcs.groove.basking.Console;
-
 public class CreateDirectoriesTask implements Callable<Void> {
 
 	private final File syncPath;
@@ -18,8 +16,6 @@ public class CreateDirectoriesTask implements Callable<Void> {
 
 	@Override
 	public Void call() throws Exception {
-
-		Console.log("Creating required directories…");
 
 		syncPath.mkdirs();
 		tempPath.mkdirs();

@@ -1,56 +1,59 @@
 package co.arcs.groove.basking.task;
 
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
-import co.arcs.groove.basking.Console;
+import co.arcs.groove.basking.event.impl.GetSongsToSyncEvent;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.Song;
 import co.arcs.groove.thresher.User;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
+import com.google.common.eventbus.EventBus;
 
-public class GetSongsToSyncTask implements Callable<List<GetSongsToSyncTask.SongToSync>> {
+public class GetSongsToSyncTask implements Task<Set<Song>> {
 
-	public static class SongToSync {
-
-		final Song song;
-		final boolean favorite;
-
-		public SongToSync(Song song, boolean favorite) {
-			this.song = song;
-			this.favorite = favorite;
-		}
-	}
-
+	private final EventBus bus;
 	private final Client client;
 	private final String username;
 	private final String password;
 
-	public GetSongsToSyncTask(Client client, String username, String password) {
+	public GetSongsToSyncTask(EventBus bus, Client client, String username, String password) {
+		this.bus = bus;
 		this.client = client;
 		this.username = username;
 		this.password = password;
 	}
 
 	@Override
-	public List<GetSongsToSyncTask.SongToSync> call() throws Exception {
-		Console.log("Getting songs to sync…");
+	public Set<Song> call() throws Exception {
+
+		bus.post(new GetSongsToSyncEvent.Started(this));
+		bus.post(new GetSongsToSyncEvent.ProgressChanged(this, 0, 3));
+
 		User user = client.login(username, password);
-		ImmutableSet<Song> librarySongs = ImmutableSet.copyOf(user.library.get());
-		ImmutableSet<Song> favoriteSongs = ImmutableSet.copyOf(user.favorites.get());
-		Set<Song> nonfavoriteSongs = Sets.difference(librarySongs, favoriteSongs);
-		List<GetSongsToSyncTask.SongToSync> songsToSync = Lists.newArrayList();
-		for (Song s : favoriteSongs) {
-			songsToSync.add(new SongToSync(s, true));
-		}
-		for (Song s : nonfavoriteSongs) {
-			songsToSync.add(new SongToSync(s, false));
-		}
-		Console.logIndent("Found " + songsToSync.size() + " items");
-		return songsToSync;
+
+		bus.post(new GetSongsToSyncEvent.ProgressChanged(this, 1, 3));
+
+		// The library.get() response contains favorited songs that do not have
+		// the 'favorited' property set. To work around this, favorites are
+		// removed from the library set and replaced with instances from the
+		// favorites set. The result is that all songs within the resulting set
+		// are 'collected', and some are 'favorited'.
+		ImmutableSet<Song> library = ImmutableSet.copyOf(user.library.get());
+
+		bus.post(new GetSongsToSyncEvent.ProgressChanged(this, 2, 3));
+
+		ImmutableSet<Song> favorites = ImmutableSet.copyOf(user.favorites.get());
+
+		SetView<Song> nonFavorites = Sets.difference(library, favorites);
+		SetView<Song> all = Sets.union(nonFavorites, favorites);
+
+		bus.post(new GetSongsToSyncEvent.ProgressChanged(this, 3, 3));
+		
+		bus.post(new GetSongsToSyncEvent.Finished(this, all.size()));
+
+		return Sets.newHashSet(all);
 	}
 }

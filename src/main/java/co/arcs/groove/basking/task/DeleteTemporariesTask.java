@@ -3,12 +3,10 @@ package co.arcs.groove.basking.task;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 
-import co.arcs.groove.basking.Console;
 import co.arcs.groove.basking.SyncService;
 
-public class DeleteTemporariesTask implements Callable<Void> {
+public class DeleteTemporariesTask implements Task<Void> {
 
 	private final File tempPath;
 
@@ -18,8 +16,6 @@ public class DeleteTemporariesTask implements Callable<Void> {
 
 	@Override
 	public Void call() throws Exception {
-
-		Console.log("Deleting old temporary files…");
 
 		File[] tempFiles = tempPath.listFiles(new FilenameFilter() {
 

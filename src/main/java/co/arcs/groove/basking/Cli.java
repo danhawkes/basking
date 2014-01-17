@@ -3,22 +3,21 @@ package co.arcs.groove.basking;
 import java.io.IOException;
 import java.util.List;
 
+import co.arcs.groove.basking.task.SyncTask.Outcome;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.internal.Lists;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class Cli {
 
 	public static void main(String[] args) {
 		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
 		Config config = new Config();
 
@@ -87,18 +86,31 @@ public class Cli {
 		// Parse again, hopefully with a complete set of arguments
 		try {
 			jc.parse(args);
-			run(objectMapper, config);
+			new Cli(config);
 		} catch (ParameterException e) {
 			exit1(jc, e);
 		}
 	}
+	
+	private static void exit1(JCommander jc, Exception e1) {
+		System.err.println(e1.getMessage());
+		jc.usage();
+		System.exit(1); 
+	}
 
-	public static void run(ObjectMapper objectMapper, Config config) {
-		printStart(objectMapper, config);
-		ListenableFuture<SyncOutcome> serviceOutcome = new SyncService(config).start();
+	private final SyncService syncService;
+	private final ConsoleLogger consoleLogger;
+
+	public Cli(Config config) {
+		consoleLogger = new ConsoleLogger();
+
+		syncService = new SyncService(config);
+		syncService.getEventBus().register(consoleLogger);
+		
+		ListenableFuture<Outcome> serviceOutcome = syncService.start();
+
 		try {
-			SyncOutcome outcome = serviceOutcome.get();
-			printOutcome(outcome);
+			Outcome outcome = serviceOutcome.get();
 			if (outcome.failedToDownload > 0) {
 				System.exit(1);
 			}
@@ -108,25 +120,4 @@ public class Cli {
 		}
 	}
 
-	private static void printStart(ObjectMapper objectMapper, Config config) {
-		Console.log("Starting sync task with config:");
-		try {
-			Console.logIndent(objectMapper.writeValueAsString(config));
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-		return;
-	}
-
-	private static void printOutcome(SyncOutcome outcome) {
-		Console.log("Finished sync task.");
-		Console.logIndent("Downloaded " + outcome.downloaded + " of "
-				+ (outcome.downloaded + outcome.failedToDownload) + " items");
-	}
-
-	private static void exit1(JCommander jc, Exception e1) {
-		System.err.println(e1.getMessage());
-		jc.usage();
-		System.exit(1);
-	}
 }
