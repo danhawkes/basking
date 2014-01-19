@@ -6,8 +6,8 @@ Sync a Grooveshark library to disk.
 
 ## Features
 
-* Command line API for use as a standalone service
-  * `$ basking ~/music 'username' 'pass'`
+* Command line API for use as a scheduled job
+  * `$ basking -dir "~/music" -user "username" -pass "password"`
 * Playlist generation
   * `GS Favorites` and `GS Collection.m3u`  
 * Robust system for keeping everything in sync with the API
@@ -32,7 +32,7 @@ Add the following maven repository and dependency to your POM:
 	<dependency>
 		<groupId>co.arcs.groove</groupId>
 		<artifactId>basking</artifactId>
-		<version>1.2.0</version>
+		<version>1.3.0</version>
 	</dependency>
 </dependencies>
 ```
@@ -46,9 +46,9 @@ Get the distribution package [here](http://arcs.co/archiva/browse/co.arcs.groove
 The jar-with-dependencies and wrapper script need adding to the path. On linux that would look something like this:
 
 ```bash
-unzip basking-1.2.0-dist.zip
-sudo cp -r basking-1.2.0 /usr/local/bin
-sudo ln -s -f /usr/local/bin/basking-1.2.0/basking /usr/local/bin/basking
+unzip basking-1.3.0-dist.zip
+sudo cp -r basking-1.3.0 /usr/local/bin
+sudo ln -s -f /usr/local/bin/basking-1.3.0/basking /usr/local/bin/basking
 ```
 
 ## Usage
