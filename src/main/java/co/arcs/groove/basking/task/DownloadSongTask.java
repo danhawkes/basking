@@ -6,8 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.Semaphore;
 
-import org.apache.http.HttpResponse;
-
+import ch.boye.httpclientandroidlib.HttpResponse;
 import co.arcs.groove.basking.SyncService;
 import co.arcs.groove.basking.Utils;
 import co.arcs.groove.basking.event.impl.DownloadSongEvent;
