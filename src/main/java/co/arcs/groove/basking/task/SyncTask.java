@@ -1,6 +1,7 @@
 package co.arcs.groove.basking.task;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -141,8 +142,9 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 						if (!config.dryRun) {
 							for (SyncPlan.Item item : syncPlan.items) {
 								if (item.action == Action.DOWNLOAD) {
-									taskFutures.add(exec.submit(new DownloadSongTask(bus, client,
-											item.song, item.file, tempPath, concurrentJobsSemaphore)));
+									taskFutures.add(exec
+											.submit(new DownloadSongTask(bus, client, item.song,
+													item.file, tempPath, concurrentJobsSemaphore)));
 								}
 							}
 						}
@@ -161,7 +163,10 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 							return Futures.immediateFuture(null);
 						} else {
 							SyncPlan syncPlan = (SyncPlan) input.get(0);
-							List<Song> downloadedSongs = (List<Song>) input.get(1);
+							
+							List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(1));
+							downloadedSongs.removeAll(Collections.singleton(null));
+							
 							return exec.submit(new GeneratePlaylistsTask(bus, config.syncDir,
 									syncPlan.items, downloadedSongs));
 						}
@@ -175,11 +180,17 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
 					@Override
 					public Outcome apply(List<Object> input) {
-						int deleted = Futures.getUnchecked(deleteSongsFuture).size();
-						int downloaded = Futures.getUnchecked(downloadSongsFuture).size();
-						int failedToDownload = Futures.getUnchecked(buildSyncPlanFuture).download
-								- downloaded;
-						return new Outcome(deleted, downloaded, failedToDownload);
+						
+						List<Void> deletedFiles = (List<Void>) input.get(0);
+						List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(1));
+						
+						int deletions = deletedFiles.size();
+						int totalDownloads = downloadedSongs.size();
+						downloadedSongs.retainAll(Collections.singleton(null));
+						int failedDownloads = downloadedSongs.size();
+						int successfulDownloads = totalDownloads - failedDownloads;
+						
+						return new Outcome(deletions, successfulDownloads, failedDownloads);
 					}
 				});
 
@@ -188,5 +199,4 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
 		return outcome;
 	}
-
 }
