@@ -7,7 +7,7 @@ import co.arcs.groove.basking.event.impl.DeleteFileEvent;
 
 import com.google.common.eventbus.EventBus;
 
-public class DeleteFileTask implements Task<Void> {
+public class DeleteFileTask implements Task<File> {
 
 	private final EventBus bus;
 	public final File file;
@@ -18,7 +18,7 @@ public class DeleteFileTask implements Task<Void> {
 	}
 
 	@Override 
-	public Void call() throws Exception {
+	public File call() throws Exception {
 
 		bus.post(new DeleteFileEvent.Started(this));
 
@@ -28,6 +28,6 @@ public class DeleteFileTask implements Task<Void> {
 		
 		bus.post(new DeleteFileEvent.Finished(this));
 		
-		return null;
+		return file;
 	}
 }

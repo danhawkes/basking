@@ -1,6 +1,7 @@
 package co.arcs.groove.basking.task;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -9,14 +10,11 @@ import java.util.concurrent.Semaphore;
 import co.arcs.groove.basking.Config;
 import co.arcs.groove.basking.event.impl.SyncTaskEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
-import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.Song;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.AsyncFunction;
@@ -39,9 +37,9 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 		}
 	}
 
+	public final Config config;
 	private final EventBus bus;
 	private final ListeningExecutorService exec;
-	public final Config config;
 	private final File tempPath;
 	private final Client client;
 	private final Semaphore concurrentJobsSemaphore;
@@ -105,54 +103,53 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 					}
 				});
 
-		// Schedule delete tasks. (These need to happen before the downloads as
+		// Schedule delete files task. (This needs to happen before downloads as
 		// the files may overlap)
-		final ListenableFuture<List<Void>> deleteSongsFuture = Futures.transform(
-				buildSyncPlanFuture, new AsyncFunction<SyncPlan, List<Void>>() {
+		final ListenableFuture<List<File>> deleteSongsFuture = Futures.transform(
+				buildSyncPlanFuture, new AsyncFunction<SyncPlan, List<File>>() {
 
 					@Override
-					public ListenableFuture<List<Void>> apply(SyncPlan syncPlan) throws Exception {
-						List<ListenableFuture<Void>> taskFutures = Lists.newArrayList();
-						if (!config.dryRun) {
-							Iterable<Item> items = Iterables.filter(syncPlan.items,
-									new Predicate<SyncPlan.Item>() {
-
-										@Override
-										public boolean apply(Item input) {
-											return input.action == Action.DELETE;
-										}
-									});
-							for (Item i : items) {
-								taskFutures.add(exec.submit(new DeleteFileTask(bus, i.file)));
+					public ListenableFuture<List<File>> apply(SyncPlan syncPlan) throws Exception {
+							List<SyncPlan.Item> deletePlanItems = Lists.newArrayList();
+							for (SyncPlan.Item item : syncPlan.items) {
+								if (item.action == Action.DELETE) {
+									deletePlanItems.add(item);
+								}
 							}
+							
+						if (deletePlanItems.size() == 0 || config.dryRun) {
+							return Futures.immediateFuture((List<File>) new ArrayList<File>());
+						} else {
+							return exec.submit(new DeleteFilesTask(bus, exec, deletePlanItems));
 						}
-						return Futures.allAsList(taskFutures);
 					}
 				});
 
-		// Schedule download tasks
+		// Schedule download songs task
 		final ListenableFuture<List<Song>> downloadSongsFuture = Futures.transform(
 				Futures.allAsList(buildSyncPlanFuture, deleteSongsFuture),
 				new AsyncFunction<List<Object>, List<Song>>() {
 
 					@Override
 					public ListenableFuture<List<Song>> apply(List<Object> input) throws Exception {
-						SyncPlan syncPlan = buildSyncPlanFuture.get();
-						List<ListenableFuture<Song>> taskFutures = Lists.newArrayList();
-						if (!config.dryRun) {
+							SyncPlan syncPlan = (SyncPlan) input.get(0);
+							List<SyncPlan.Item> downloadPlanItems = Lists.newArrayList();
 							for (SyncPlan.Item item : syncPlan.items) {
 								if (item.action == Action.DOWNLOAD) {
-									taskFutures.add(exec
-											.submit(new DownloadSongTask(bus, client, item.song,
-													item.file, tempPath, concurrentJobsSemaphore)));
+									downloadPlanItems.add(item);
 								}
 							}
+
+						if (downloadPlanItems.size() == 0 || config.dryRun) {
+							return Futures.immediateFuture((List<Song>) new ArrayList<Song>());
+						} else {
+							return exec.submit(new DownloadSongsTask(bus, client, exec, tempPath,
+									concurrentJobsSemaphore, downloadPlanItems));
 						}
-						return Futures.successfulAsList(taskFutures);
 					}
 				});
 
-		// Schedule write playlist task
+		// Schedule write playlists task
 		final ListenableFuture<Void> generatePlaylistsFuture = Futures.transform(
 				Futures.allAsList(buildSyncPlanFuture, downloadSongsFuture),
 				new AsyncFunction<List<Object>, Void>() {
@@ -163,10 +160,11 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 							return Futures.immediateFuture(null);
 						} else {
 							SyncPlan syncPlan = (SyncPlan) input.get(0);
-							
-							List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(1));
+
+							List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input
+									.get(1));
 							downloadedSongs.removeAll(Collections.singleton(null));
-							
+
 							return exec.submit(new GeneratePlaylistsTask(bus, config.syncDir,
 									syncPlan.items, downloadedSongs));
 						}
@@ -180,16 +178,16 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
 					@Override
 					public Outcome apply(List<Object> input) {
-						
-						List<Void> deletedFiles = (List<Void>) input.get(0);
+
+						List<File> deletedFiles = (List<File>) input.get(0);
 						List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(1));
-						
+
 						int deletions = deletedFiles.size();
 						int totalDownloads = downloadedSongs.size();
 						downloadedSongs.retainAll(Collections.singleton(null));
 						int failedDownloads = downloadedSongs.size();
 						int successfulDownloads = totalDownloads - failedDownloads;
-						
+
 						return new Outcome(deletions, successfulDownloads, failedDownloads);
 					}
 				});

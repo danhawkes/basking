@@ -81,8 +81,6 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
 
 		bus.post(new BuildSyncPlanEvent.Started(this));
 
-		List<Task<Void>> items = Lists.newArrayList();
-
 		// Only deal with mp3 files
 		List<File> files = Lists.newArrayList(syncPath.listFiles(new FilenameFilter() {
 
@@ -104,7 +102,6 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
 			long id = Utils.decodeId(f);
 			if (id == -1) {
 				// …if not a managed file: delete
-				items.add(new DeleteFileTask(bus, f));
 				syncPlanItems.add(new Item(f, Action.DELETE, null));
 			} else {
 				Iterator<Song> iterator = songs.iterator();
@@ -122,7 +119,6 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
 					}
 				}
 				// …if a managed file, but not in library: delete
-				items.add(new DeleteFileTask(bus, f));
 				syncPlanItems.add(new Item(f, Action.DELETE, song));
 			}
 		}
