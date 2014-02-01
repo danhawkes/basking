@@ -7,25 +7,22 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.Locale;
-import java.util.Map;
 
 import org.fusesource.jansi.Ansi.Color;
 import org.fusesource.jansi.AnsiConsole;
 
 import co.arcs.groove.basking.event.impl.BuildSyncPlanEvent;
-import co.arcs.groove.basking.event.impl.DeleteFileEvent;
+import co.arcs.groove.basking.event.impl.DeleteFilesEvent;
 import co.arcs.groove.basking.event.impl.DownloadSongEvent;
+import co.arcs.groove.basking.event.impl.DownloadSongsEvent;
 import co.arcs.groove.basking.event.impl.GeneratePlaylistsEvent;
 import co.arcs.groove.basking.event.impl.GetSongsToSyncEvent;
-import co.arcs.groove.basking.event.impl.SyncTaskEvent;
-import co.arcs.groove.thresher.Song;
+import co.arcs.groove.basking.event.impl.SyncEvent;
 
-import com.beust.jcommander.internal.Maps;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Strings;
-import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.CharStreams;
 
@@ -43,10 +40,10 @@ public class ConsoleLogger {
 	// Whole sync process
 
 	@Subscribe
-	public void onEvent(SyncTaskEvent.Started e) {
+	public void onEvent(SyncEvent.Started e) {
 		ansiPrintLogo();
 		ansiPrintPrimaryLn("Starting sync…");
-		
+
 		// Print config, obfuscating password
 		try {
 			Config config = new Config(e.task.config);
@@ -60,9 +57,16 @@ public class ConsoleLogger {
 	}
 
 	@Subscribe
-	public void onEvent(SyncTaskEvent.Finished e) {
-
-		ansiPrintPrimaryLn("Finished sync.");
+	public void onEvent(SyncEvent.Finished e) {
+		String message;
+		if (e.outcome.failedToDownload == 0) {
+			message = "Sync finished successfully.";
+		} else {
+			message = String.format(Locale.US,
+					"Sync finished with errors: %d item(s) could not be downloaded.",
+					e.outcome.failedToDownload);
+		}
+		ansiPrintPrimaryLn(message);
 	}
 
 	// Query API for use information
@@ -102,33 +106,22 @@ public class ConsoleLogger {
 
 	// Delete files
 
-	boolean startedDeletion;
-
 	@Subscribe
-	public void onEvent(DeleteFileEvent.Started e) {
-		if (!startedDeletion) {
-			ansiPrintPrimaryLn("Deleting files…");
-			startedDeletion = true;
-		}
+	public void onEvent(DeleteFilesEvent.Started e) {
+		ansiPrintPrimaryLn("Deleting files…");
+		ansiPrintProgress(0.0f);
 	}
 
 	@Subscribe
-	public void onEvent(DeleteFileEvent.Finished e) {
+	public void onEvent(DeleteFilesEvent.Finished e) {
 		ansiPrintProgress(1.0f);
 	}
 
 	// Download song
 
-	boolean startedDownload;
-
-	Map<Song, Float> downloadingSongs = Maps.newLinkedHashMap();
-
 	@Subscribe
-	public void onEvent(DownloadSongEvent.Started e) {
-		if (!startedDownload) {
-			ansiPrintPrimaryLn("Downloading songs…");
-			startedDownload = true;
-		}
+	public void onEvent(DownloadSongsEvent.Started e) {
+		ansiPrintPrimaryLn("Downloading songs…");
 	}
 
 	@Subscribe
@@ -153,17 +146,6 @@ public class ConsoleLogger {
 	@Subscribe
 	public void onEvent(GeneratePlaylistsEvent.ProgressChanged e) {
 		ansiPrintProgress(e.fraction);
-	}
-
-	@Subscribe
-	public void onEvent(GeneratePlaylistsEvent.Finished e) {
-	}
-
-	//
-
-	@Subscribe
-	public void onEvent(DeadEvent e) {
-		System.err.println("Dead event: " + e.getEvent().toString());
 	}
 
 	// Printers

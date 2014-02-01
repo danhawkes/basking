@@ -2,10 +2,11 @@ package co.arcs.groove.basking.event.impl;
 
 import co.arcs.groove.basking.event.TaskEvent;
 import co.arcs.groove.basking.task.SyncTask;
+import co.arcs.groove.basking.task.SyncTask.Outcome;
 
-public class SyncTaskEvent {
+public class SyncEvent {
 
-	private SyncTaskEvent() {
+	private SyncEvent() {
 	}
 
 	public static class Started extends TaskEvent.Started<SyncTask> {
@@ -22,9 +23,12 @@ public class SyncTaskEvent {
 	}
 
 	public static class Finished extends TaskEvent.Finished<SyncTask> {
+		
+		public final Outcome outcome;
 
-		public Finished(SyncTask task) {
+		public Finished(SyncTask task, Outcome outcome) {
 			super(task);
+			this.outcome = outcome;
 		}
 	}
 }

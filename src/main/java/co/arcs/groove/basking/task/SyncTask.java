@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import co.arcs.groove.basking.Config;
-import co.arcs.groove.basking.event.impl.SyncTaskEvent;
+import co.arcs.groove.basking.event.impl.SyncEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
 import co.arcs.groove.thresher.Client;
@@ -61,7 +61,7 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 	@Override
 	public Outcome call() throws Exception {
 
-		bus.post(new SyncTaskEvent.Started(this));
+		bus.post(new SyncEvent.Started(this));
 
 		// Ensure sync and temp directories exist
 		ListenableFuture<Void> createdRequiredDirectoriesFuture = (ListenableFuture<Void>) ((config.dryRun) ? Futures
@@ -110,13 +110,13 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
 					@Override
 					public ListenableFuture<List<File>> apply(SyncPlan syncPlan) throws Exception {
-							List<SyncPlan.Item> deletePlanItems = Lists.newArrayList();
-							for (SyncPlan.Item item : syncPlan.items) {
-								if (item.action == Action.DELETE) {
-									deletePlanItems.add(item);
-								}
+						List<SyncPlan.Item> deletePlanItems = Lists.newArrayList();
+						for (SyncPlan.Item item : syncPlan.items) {
+							if (item.action == Action.DELETE) {
+								deletePlanItems.add(item);
 							}
-							
+						}
+
 						if (deletePlanItems.size() == 0 || config.dryRun) {
 							return Futures.immediateFuture((List<File>) new ArrayList<File>());
 						} else {
@@ -132,13 +132,13 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
 					@Override
 					public ListenableFuture<List<Song>> apply(List<Object> input) throws Exception {
-							SyncPlan syncPlan = (SyncPlan) input.get(0);
-							List<SyncPlan.Item> downloadPlanItems = Lists.newArrayList();
-							for (SyncPlan.Item item : syncPlan.items) {
-								if (item.action == Action.DOWNLOAD) {
-									downloadPlanItems.add(item);
-								}
+						SyncPlan syncPlan = (SyncPlan) input.get(0);
+						List<SyncPlan.Item> downloadPlanItems = Lists.newArrayList();
+						for (SyncPlan.Item item : syncPlan.items) {
+							if (item.action == Action.DOWNLOAD) {
+								downloadPlanItems.add(item);
 							}
+						}
 
 						if (downloadPlanItems.size() == 0 || config.dryRun) {
 							return Futures.immediateFuture((List<Song>) new ArrayList<Song>());
@@ -193,7 +193,7 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 				});
 
 		Outcome outcome = outcomeFuture.get();
-		bus.post(new SyncTaskEvent.Finished(this));
+		bus.post(new SyncEvent.Finished(this, outcome));
 
 		return outcome;
 	}
