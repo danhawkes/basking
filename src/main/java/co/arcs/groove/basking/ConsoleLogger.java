@@ -46,8 +46,14 @@ public class ConsoleLogger {
 	public void onEvent(SyncTaskEvent.Started e) {
 		ansiPrintLogo();
 		ansiPrintPrimaryLn("Starting sync…");
+		
+		// Print config, obfuscating password
 		try {
-			ansiPrintSecondaryLn(objectMapper.writeValueAsString(e.task.config));
+			Config config = new Config(e.task.config);
+			if (config.password != null) {
+				config.password = "******";
+			}
+			ansiPrintSecondaryLn(objectMapper.writeValueAsString(config));
 		} catch (JsonProcessingException e2) {
 			throw new RuntimeException(e2);
 		}

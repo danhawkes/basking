@@ -48,4 +48,17 @@ public class Config {
 	@JsonIgnore
 	@Parameter(names = { "-h", "--help" }, description = "Show this help.", help = true)
 	public boolean help;
+
+	public Config() {
+	}
+
+	public Config(Config config) {
+		this.syncDir = config.syncDir;
+		this.username = config.username;
+		this.password = config.password;
+		this.numConcurrent = config.numConcurrent;
+		this.configFile = config.configFile;
+		this.dryRun = config.dryRun;
+		this.help = config.help;
+	}
 }
