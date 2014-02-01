@@ -43,6 +43,7 @@ public class DownloadSongTask implements Task<Song> {
 		
 		concurrentJobsSemaphore.acquire();
 		
+		try {
 		bus.post(new DownloadSongEvent.Started(this));
 		
 		File tempFile = new File(tempPath, syncFile.getName() + SyncService.TEMP_FILE_EXTENSION_1);
@@ -128,7 +129,9 @@ public class DownloadSongTask implements Task<Song> {
 
 		bus.post(new DownloadSongEvent.Finished(this));
 		
+		} finally {
 		concurrentJobsSemaphore.release();
+		}
 		
 		return song;
 	}
