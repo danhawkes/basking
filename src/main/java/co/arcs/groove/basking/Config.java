@@ -49,6 +49,10 @@ public class Config {
 	@Parameter(names = { "-h", "--help" }, description = "Show this help.", help = true)
 	public boolean help;
 
+	@JsonIgnore
+	@Parameter(names = { "-v", "--version" }, description = "Print the library version.", help = true)
+	public boolean version;
+
 	public Config() {
 	}
 
@@ -60,5 +64,6 @@ public class Config {
 		this.configFile = config.configFile;
 		this.dryRun = config.dryRun;
 		this.help = config.help;
+		this.version = config.version;
 	}
 }

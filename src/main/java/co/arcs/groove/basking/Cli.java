@@ -1,7 +1,9 @@
 package co.arcs.groove.basking;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Properties;
 
 import co.arcs.groove.basking.task.SyncTask.Outcome;
 
@@ -40,6 +42,21 @@ public class Cli {
 			jc.usage();
 			return;
 		}
+
+		if (config.version) {
+			try {
+				Properties p = new Properties();
+				InputStream is = Cli.class
+						.getResourceAsStream("/META-INF/maven/co.arcs.groove/basking/pom.properties");
+				p.load(is);
+				String version = p.getProperty("version", null);
+				System.out.println("basking v" + version);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			return;
+		}
+
 		// Load the config file, if present, and insert additional arguments
 		if (config.configFile != null) {
 			List<String> configArgs = Lists.newArrayList();
@@ -91,11 +108,11 @@ public class Cli {
 			exit1(jc, e);
 		}
 	}
-	
+
 	private static void exit1(JCommander jc, Exception e1) {
 		System.err.println(e1.getMessage());
 		jc.usage();
-		System.exit(1); 
+		System.exit(1);
 	}
 
 	private final SyncService syncService;
@@ -106,7 +123,7 @@ public class Cli {
 
 		syncService = new SyncService(config);
 		syncService.getEventBus().register(consoleLogger);
-		
+
 		ListenableFuture<Outcome> serviceOutcome = syncService.start();
 
 		try {
