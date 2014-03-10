@@ -14,7 +14,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 public class SyncService {
 
-	private final EventBus bus = new EventBus();
+	private final EventBus bus;
 	private final Config config;
 
 	public static final String FINISHED_FILE_EXTENSION = ".mp3";
@@ -22,7 +22,12 @@ public class SyncService {
 	public static final String TEMP_FILE_EXTENSION_2 = ".tmp.2";
 
 	public SyncService(Config config) {
+		this(config, new EventBus(SyncService.class.getName()));
+	}
+
+	public SyncService(Config config, EventBus bus) {
 		this.config = config;
+		this.bus = bus;
 	}
 
 	public EventBus getEventBus() {
@@ -36,7 +41,7 @@ public class SyncService {
 	public ListenableFuture<SyncTask.Outcome> start() {
 
 		final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors
-				.newFixedThreadPool(config.numConcurrent+3));
+				.newFixedThreadPool(config.numConcurrent + 3));
 
 		ListenableFuture<SyncTask.Outcome> syncOutcomeFuture = exec.submit(new SyncTask(bus, exec,
 				config));
