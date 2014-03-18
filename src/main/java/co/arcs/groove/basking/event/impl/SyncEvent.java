@@ -10,6 +10,7 @@ public class SyncEvent {
 	}
 
 	public static class Started extends TaskEvent.Started<SyncTask> {
+
 		public Started(SyncTask task) {
 			super(task);
 		}
@@ -23,12 +24,22 @@ public class SyncEvent {
 	}
 
 	public static class Finished extends TaskEvent.Finished<SyncTask> {
-		
+
 		public final Outcome outcome;
 
 		public Finished(SyncTask task, Outcome outcome) {
 			super(task);
 			this.outcome = outcome;
+		}
+	}
+
+	public static class FinishedWithError extends TaskEvent.Finished<SyncTask> {
+
+		public final Exception e;
+
+		public FinishedWithError(SyncTask task, Exception e) {
+			super(task);
+			this.e = e;
 		}
 	}
 }

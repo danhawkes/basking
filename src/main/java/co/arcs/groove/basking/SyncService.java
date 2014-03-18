@@ -1,5 +1,7 @@
 package co.arcs.groove.basking;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.concurrent.Executors;
 
 import co.arcs.groove.basking.task.SyncTask;
@@ -15,18 +17,17 @@ import com.google.common.util.concurrent.MoreExecutors;
 public class SyncService {
 
 	private final EventBus bus;
-	private final Config config;
 
 	public static final String FINISHED_FILE_EXTENSION = ".mp3";
 	public static final String TEMP_FILE_EXTENSION_1 = ".tmp.1";
 	public static final String TEMP_FILE_EXTENSION_2 = ".tmp.2";
 
-	public SyncService(Config config) {
-		this(config, new EventBus(SyncService.class.getName()));
+	public SyncService() {
+		this(new EventBus(SyncService.class.getName()));
 	}
 
-	public SyncService(Config config, EventBus bus) {
-		this.config = config;
+	public SyncService(EventBus bus) {
+		checkNotNull(bus);
 		this.bus = bus;
 	}
 
@@ -34,11 +35,7 @@ public class SyncService {
 		return bus;
 	}
 
-	public Config getConfig() {
-		return config;
-	}
-
-	public ListenableFuture<SyncTask.Outcome> start() {
+	public ListenableFuture<SyncTask.Outcome> start(Config config) {
 
 		final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors
 				.newFixedThreadPool(config.numConcurrent + 3));
@@ -50,7 +47,7 @@ public class SyncService {
 		Futures.addCallback(syncOutcomeFuture, new FutureCallback<Outcome>() {
 
 			@Override
-			public void onSuccess(Outcome result) {
+			public void onSuccess(Outcome outcome) {
 				exec.shutdown();
 			}
 

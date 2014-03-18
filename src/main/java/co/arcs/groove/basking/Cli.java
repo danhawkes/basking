@@ -121,10 +121,10 @@ public class Cli {
 	public Cli(Config config) {
 		consoleLogger = new ConsoleLogger();
 
-		syncService = new SyncService(config);
+		syncService = new SyncService();
 		syncService.getEventBus().register(consoleLogger);
 
-		ListenableFuture<Outcome> serviceOutcome = syncService.start();
+		ListenableFuture<Outcome> serviceOutcome = syncService.start(config);
 
 		try {
 			Outcome outcome = serviceOutcome.get();

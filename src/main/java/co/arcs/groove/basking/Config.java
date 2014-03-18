@@ -1,5 +1,7 @@
 package co.arcs.groove.basking;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.File;
 
 import com.beust.jcommander.Parameter;
@@ -50,10 +52,22 @@ public class Config {
 	public boolean help;
 
 	@JsonIgnore
-	@Parameter(names = { "-v", "--version" }, description = "Print the library version.", help = true)
+	@Parameter(
+			names = { "-v", "--version" },
+			description = "Print the library version.",
+			help = true)
 	public boolean version;
 
 	public Config() {
+	}
+
+	public Config(String username, String password, File syncDir) {
+		checkNotNull(username);
+		checkNotNull(password);
+		checkNotNull(syncDir);
+		this.username = username;
+		this.password = password;
+		this.syncDir = syncDir;
 	}
 
 	public Config(Config config) {
