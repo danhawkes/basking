@@ -25,8 +25,8 @@ public class SyncServiceTest {
 
 		Config config = new Config(USERNAME, PASSWORD, tempDir.getRoot());
 		Outcome outcome = new SyncService().start(config).get();
+		assertEquals(0, outcome.failedToDownload);
 		assertEquals(0, outcome.deleted);
 		assertEquals(2, outcome.downloaded);
-		assertEquals(0, outcome.failedToDownload);
 	}
 }
