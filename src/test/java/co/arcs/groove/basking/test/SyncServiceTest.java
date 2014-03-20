@@ -14,8 +14,8 @@ import co.arcs.groove.basking.task.SyncTask.Outcome;
 
 public class SyncServiceTest {
 
-	private static final String USERNAME = "a8da7cd573d12b14a0af9b11252de9d8@mailinator.com";
-	private static final String PASSWORD = "a8da7cd573d12b14a0af9b11252de9d8";
+	private static final String USERNAME = "jka32muwfhqt3jf4qbubc8dp@mailinator.com";
+	private static final String PASSWORD = "jka32muwfhqt3jf4qbubc8dp";
 
 	@Rule
 	public TemporaryFolder tempDir = new TemporaryFolder();
