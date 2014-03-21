@@ -24,7 +24,7 @@ Add the following maven repository and dependency to your POM:
 <repositories>
 	<repository>
 		<id>arcs.co</id>
-		<url>http://arcs.co/archiva/repository/internal</url>
+		<url>http://arcs.co/archiva/repository/external</url>
 	</repository>
 </repositories>
 
@@ -37,11 +37,11 @@ Add the following maven repository and dependency to your POM:
 </dependencies>
 ```
 
-Alternatively, download the latest standalone Jar [here](http://arcs.co/archiva/browse/co.arcs.groove/basking/).
+Alternatively, download the latest standalone Jar [here](https://arcs.co/archiva/#artifact/co.arcs.groove/basking).
 
 ### Command line
 
-Get the distribution package [here](http://arcs.co/archiva/browse/co.arcs.groove/basking/). 
+Get the distribution package [here](https://arcs.co/archiva/#artifact/co.arcs.groove/basking). 
 
 The jar-with-dependencies and wrapper script need adding to the path. On linux that would look something like this:
 
