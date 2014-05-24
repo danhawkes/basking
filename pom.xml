@@ -10,16 +10,16 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
-	<repositories>
-		<repository>
-			<id>mashape-releases</id>
-			<url>http://maven.mashape.com/releases</url>
-		</repository>
-		<repository>
-			<id>arcs.co</id>
-			<url>http://arcs.co/archiva/repository/internal</url>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>mashape-releases</id>
+            <url>http://maven.mashape.com/releases</url>
+        </repository>
+        <repository>
+            <id>arcs.co</id>
+            <url>https://arcs.co/archiva/repository/external/</url>
+        </repository>
+    </repositories>
 
 	<dependencies>
 		<dependency>
