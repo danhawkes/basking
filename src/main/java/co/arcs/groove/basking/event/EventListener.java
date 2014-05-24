@@ -4,14 +4,14 @@ import com.google.common.eventbus.Subscribe;
 
 public interface EventListener {
 
-	// High-level events
+    // High-level events
 
-	@Subscribe
-	void onTaskStarted(TaskEvent.Started task);
+    @Subscribe
+    void onTaskStarted(TaskEvent.Started task);
 
-	@Subscribe
-	void onTaskProgressChanged(TaskEvent.ProgressChanged task, int percent);
+    @Subscribe
+    void onTaskProgressChanged(TaskEvent.ProgressChanged task, int percent);
 
-	@Subscribe
-	void onTaskFinished(TaskEvent.Finished task);
+    @Subscribe
+    void onTaskFinished(TaskEvent.Finished task);
 }

@@ -1,32 +1,32 @@
 package co.arcs.groove.basking.test;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.concurrent.ExecutionException;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import java.util.concurrent.ExecutionException;
 
 import co.arcs.groove.basking.Config;
 import co.arcs.groove.basking.SyncService;
 import co.arcs.groove.basking.task.SyncTask.Outcome;
 
+import static org.junit.Assert.assertEquals;
+
 public class SyncServiceTest {
 
-	private static final String USERNAME = "jka32muwfhqt3jf4qbubc8dp@mailinator.com";
-	private static final String PASSWORD = "jka32muwfhqt3jf4qbubc8dp";
+    private static final String USERNAME = "jka32muwfhqt3jf4qbubc8dp@mailinator.com";
+    private static final String PASSWORD = "jka32muwfhqt3jf4qbubc8dp";
 
-	@Rule
-	public TemporaryFolder tempDir = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder tempDir = new TemporaryFolder();
 
-	@Test
-	public void syncTest() throws InterruptedException, ExecutionException {
+    @Test
+    public void syncTest() throws InterruptedException, ExecutionException {
 
-		Config config = new Config(USERNAME, PASSWORD, tempDir.getRoot());
-		Outcome outcome = new SyncService().start(config).get();
-		assertEquals(0, outcome.failedToDownload);
-		assertEquals(0, outcome.deleted);
-		assertEquals(2, outcome.downloaded);
-	}
+        Config config = new Config(USERNAME, PASSWORD, tempDir.getRoot());
+        Outcome outcome = new SyncService().start(config).get();
+        assertEquals(0, outcome.failedToDownload);
+        assertEquals(0, outcome.deleted);
+        assertEquals(2, outcome.downloaded);
+    }
 }

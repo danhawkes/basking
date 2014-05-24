@@ -5,26 +5,26 @@ import co.arcs.groove.basking.task.GeneratePlaylistsTask;
 
 public class GeneratePlaylistsEvent {
 
-	private GeneratePlaylistsEvent() {
-	}
+    private GeneratePlaylistsEvent() {
+    }
 
-	public static class Started extends TaskEvent.Started<GeneratePlaylistsTask> {
-		public Started(GeneratePlaylistsTask task) {
-			super(task);
-		}
-	}
+    public static class Started extends TaskEvent.Started<GeneratePlaylistsTask> {
+        public Started(GeneratePlaylistsTask task) {
+            super(task);
+        }
+    }
 
-	public static class ProgressChanged extends TaskEvent.ProgressChanged<GeneratePlaylistsTask> {
+    public static class ProgressChanged extends TaskEvent.ProgressChanged<GeneratePlaylistsTask> {
 
-		public ProgressChanged(GeneratePlaylistsTask task, int progress, int total) {
-			super(task, progress, total);
-		} 
-	}
+        public ProgressChanged(GeneratePlaylistsTask task, int progress, int total) {
+            super(task, progress, total);
+        }
+    }
 
-	public static class Finished extends TaskEvent.Finished<GeneratePlaylistsTask> {
+    public static class Finished extends TaskEvent.Finished<GeneratePlaylistsTask> {
 
-		public Finished(GeneratePlaylistsTask task) {
-			super(task);
-		}
-	}
+        public Finished(GeneratePlaylistsTask task) {
+            super(task);
+        }
+    }
 }
