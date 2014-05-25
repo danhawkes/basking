@@ -41,11 +41,11 @@ public class GetSongsToSyncTask implements Task<Set<Song>> {
         // removed from the library set and replaced with instances from the
         // favorites set. The result is that all songs within the resulting set
         // are 'collected', and some are 'favorited'.
-        ImmutableSet<Song> library = ImmutableSet.copyOf(user.library.get());
+        ImmutableSet<Song> library = ImmutableSet.copyOf(user.library().get());
 
         bus.post(new GetSongsToSyncEvent.ProgressChanged(this, 2, 3));
 
-        ImmutableSet<Song> favorites = ImmutableSet.copyOf(user.favorites.get());
+        ImmutableSet<Song> favorites = ImmutableSet.copyOf(user.favorites().get());
 
         SetView<Song> nonFavorites = Sets.difference(library, favorites);
         SetView<Song> all = Sets.union(nonFavorites, favorites);

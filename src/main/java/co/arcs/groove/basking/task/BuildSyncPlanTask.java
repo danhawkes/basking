@@ -1,13 +1,23 @@
 package co.arcs.groove.basking.task;
 
+import com.beust.jcommander.internal.Maps;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
+import com.google.common.io.CharStreams;
+import com.google.common.io.LineProcessor;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilenameFilter;
-import java.util.Iterator;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -25,6 +35,8 @@ import co.arcs.groove.thresher.Song;
  * with a collection of songs.
  */
 public class BuildSyncPlanTask implements Task<SyncPlan> {
+
+    public static final String CACHE_FILENAME = ".gssynccache";
 
     public static class SyncPlan {
 
@@ -83,7 +95,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
      * @param syncDir
      *         The directory to be synchronised.
      * @param songs
-     *         The songs that {@syncDir} should contain.
+     *         The songs that {@code syncDir} should contain.
      */
     public BuildSyncPlanTask(EventBus bus, File syncDir, Set<Song> songs) {
         this.bus = bus;
@@ -96,55 +108,11 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
 
         bus.post(new BuildSyncPlanEvent.Started(this));
 
-        // Only deal with mp3 files
-        List<File> files = Lists.newArrayList(syncPath.listFiles(new FilenameFilter() {
+        SyncPlan syncPlan = buildSyncPlanUsingCache(songs);
 
-            @Override
-            public boolean accept(File arg0, String arg1) {
-                return arg1.endsWith(SyncService.FINISHED_FILE_EXTENSION);
-            }
-        }));
-
-        int progress = 0;
-        bus.post(new BuildSyncPlanEvent.ProgressChanged(this, progress++, files.size()));
-
-        ImmutableList.Builder<SyncPlan.Item> syncPlanItems = ImmutableList.builder();
-
-        // For existing files…
-        out:
-        for (File f : files) {
-            bus.post(new BuildSyncPlanEvent.ProgressChanged(this, progress++, files.size()));
-            long id = Utils.decodeId(f);
-            if (id == -1) {
-                // …if not a managed file: delete
-                syncPlanItems.add(new Item(f, Action.DELETE, null));
-            } else {
-                Iterator<Song> iterator = songs.iterator();
-                Song song = null;
-                while (iterator.hasNext()) {
-                    song = iterator.next();
-                    if (song.id == id) {
-                        // …if song already in library: ignore
-                        syncPlanItems.add(new Item(f, Action.LEAVE, song));
-                        // Remove from sync list. Anything left in this list
-                        // after the loop is not in the library and needs
-                        // downloading.
-                        iterator.remove();
-                        continue out;
-                    }
-                }
-                // …if a managed file, but not in library: delete
-                syncPlanItems.add(new Item(f, Action.DELETE, song));
-            }
+        if (syncPlan == null) {
+            syncPlan = buildSyncPlanByAnalysingFiles();
         }
-
-        for (Song song : songs) {
-            syncPlanItems.add(new Item(new File(syncPath, Utils.getDiskName(song)),
-                    Action.DOWNLOAD,
-                    song));
-        }
-
-        SyncPlan syncPlan = new SyncPlan(syncPlanItems.build());
 
         bus.post(new BuildSyncPlanEvent.Finished(this,
                 syncPlan.download,
@@ -152,5 +120,117 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
                 syncPlan.leave));
 
         return syncPlan;
+    }
+
+    private SyncPlan buildSyncPlanByAnalysingFiles() {
+
+        // Get a list of all non-hidden mp3 files
+        List<File> files = Lists.newArrayList(syncPath.listFiles(new FilenameFilter() {
+
+            @Override
+            public boolean accept(File arg0, String arg1) {
+                return !arg1.startsWith(".") && arg1.endsWith(SyncService.FINISHED_FILE_EXTENSION);
+            }
+        }));
+
+        int progress = 0;
+        bus.post(new BuildSyncPlanEvent.ProgressChanged(this, progress++, files.size()));
+
+        Map<Integer, File> existingSongs = Maps.newHashMap();
+        for (File f : files) {
+            // This operation takes far longer than everything else, so is used as the measure of progress
+            Integer id = Utils.decodeId(f);
+            if (id != Utils.ID_NONE) {
+                existingSongs.put(id, f);
+            }
+            bus.post(new BuildSyncPlanEvent.ProgressChanged(this, progress++, files.size()));
+        }
+
+        Map<Integer, Song> wantedSongs = Maps.newHashMap();
+        for (Song s : songs) {
+            wantedSongs.put(s.getId(), s);
+        }
+
+        Builder<Item> syncPlanItems = ImmutableList.builder();
+
+        for (Integer id : wantedSongs.keySet()) {
+            if (existingSongs.containsKey(id)) {
+                // Wanted song already exists, so leave as is
+                syncPlanItems.add(new Item(existingSongs.get(id),
+                        Action.LEAVE,
+                        wantedSongs.get(id)));
+                existingSongs.remove(id);
+            } else {
+                // Wanted song is absent, so download
+                syncPlanItems.add(new Item(new File(syncPath,
+                        Utils.getDiskName(wantedSongs.get(id))),
+                        Action.DOWNLOAD,
+                        wantedSongs.get(id)
+                ));
+            }
+        }
+
+        // Remaining songs are present but unwanted, so delete
+        for (Integer id : existingSongs.keySet()) {
+            syncPlanItems.add(new Item(existingSongs.get(id), Action.DELETE, null));
+        }
+        return new SyncPlan(syncPlanItems.build());
+    }
+
+    /**
+     * Reads the cache file and returns a sync plan based on its contents.
+     *
+     * @return A sync plan, or null if the cache file does not exist.
+     */
+    @Nullable
+    private SyncPlan buildSyncPlanUsingCache(Collection<Song> songs) throws IOException {
+        File cacheFile = new File(syncPath, CACHE_FILENAME);
+        if (cacheFile.exists()) {
+
+            ImmutableList.Builder<SyncPlan.Item> items = ImmutableList.builder();
+
+            InputStream is = new BufferedInputStream(new FileInputStream(cacheFile));
+            Map<Integer, File> cacheMap = CharStreams.readLines(new InputStreamReader(is),
+                    new LineProcessor<Map<Integer, File>>() {
+
+                        Map<Integer, File> map = Maps.newHashMap();
+
+                        @Override
+                        public boolean processLine(String line) throws IOException {
+                            String[] split = line.split("\\|");
+                            map.put(Integer.valueOf(split[0]), new File(syncPath, split[1]));
+                            return true;
+                        }
+
+                        @Override
+                        public Map<Integer, File> getResult() {
+                            return map;
+                        }
+                    }
+            );
+            is.close();
+
+            for (Song song : songs) {
+                if (cacheMap.containsKey(song.getId())) {
+                    // Wanted song is in cache, so leave as is
+                    items.add(new Item(cacheMap.get(song.getId()), Action.LEAVE, song));
+                    cacheMap.remove(song.getId());
+                } else {
+                    // Wanted song is absent, so download
+                    items.add(new Item(new File(syncPath, Utils.getDiskName(song)),
+                            Action.DOWNLOAD,
+                            song));
+                }
+            }
+
+            // Unwanted stuff that's in the cache should be removed
+            for (File file : cacheMap.values()) {
+                items.add(new Item(file, Action.DELETE, null));
+            }
+
+            return new SyncPlan(items.build());
+        } else {
+            return null;
+        }
     }
 }

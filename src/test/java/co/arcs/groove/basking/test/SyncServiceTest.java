@@ -21,7 +21,7 @@ public class SyncServiceTest {
     public TemporaryFolder tempDir = new TemporaryFolder();
 
     @Test
-    public void syncTest() throws InterruptedException, ExecutionException {
+    public void sync() throws InterruptedException, ExecutionException {
 
         Config config = new Config(USERNAME, PASSWORD, tempDir.getRoot());
         Outcome outcome = new SyncService().start(config).get();

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>co.arcs.groove</groupId>
     <artifactId>basking</artifactId>
-    <version>1.5.3</version>
+    <version>1.6.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>basking</name>
     <properties>
@@ -17,8 +17,12 @@
             <url>http://maven.mashape.com/releases</url>
         </repository>
         <repository>
-            <id>arcs.co</id>
+            <id>arcs.co-external</id>
             <url>https://arcs.co/archiva/repository/external/</url>
+        </repository>
+        <repository>
+            <id>arcs.co-snapshots</id>
+            <url>https://arcs.co/archiva/repository/snapshots/</url>
         </repository>
     </repositories>
 
@@ -29,14 +33,20 @@
             <version>15.0</version>
         </dependency>
         <dependency>
-            <groupId>ch.boye</groupId>
+            <groupId>com.belladati</groupId>
             <artifactId>httpclientandroidlib</artifactId>
-            <version>1.2.0</version>
+            <version>4.3.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>1.9.5</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -52,7 +62,7 @@
         <dependency>
             <groupId>co.arcs.groove</groupId>
             <artifactId>thresher</artifactId>
-            <version>1.1.1</version>
+            <version>1.2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.mpatric</groupId>
@@ -143,9 +153,13 @@
 
     <distributionManagement>
         <repository>
-            <id>archiva.external</id>
-            <name>Archiva External</name>
+            <id>arcs.co-external</id>
             <url>https://arcs.co/archiva/repository/external/</url>
         </repository>
+        <snapshotRepository>
+            <id>arcs.co-snapshots</id>
+            <url>https://arcs.co/archiva/repository/snapshots/</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
     </distributionManagement>
 </project>

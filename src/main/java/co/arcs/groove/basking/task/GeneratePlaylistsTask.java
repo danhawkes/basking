@@ -63,7 +63,7 @@ public class GeneratePlaylistsTask implements Task<Void> {
         for (SyncPlan.Item item : successfulItems) {
             if ((item.action == Action.DOWNLOAD) || (item.action == Action.LEAVE)) {
                 collectionItems.add(item);
-                if (item.song.userData.favorited) {
+                if (item.song.getUserData().isFavorited()) {
                     favoriteItems.add(item);
                 }
             }
@@ -74,14 +74,14 @@ public class GeneratePlaylistsTask implements Task<Void> {
 
             @Override
             public int compare(Item o1, Item o2) {
-                return o2.song.userData.timeFavorited.compareTo(o1.song.userData.timeFavorited);
+                return o2.song.getUserData().getTimeFavorited().compareTo(o1.song.getUserData().getTimeFavorited());
             }
         });
         Collections.sort(collectionItems, new Comparator<SyncPlan.Item>() {
 
             @Override
             public int compare(Item o1, Item o2) {
-                return o2.song.userData.timeAdded.compareTo(o1.song.userData.timeAdded);
+                return o2.song.getUserData().getTimeAdded().compareTo(o1.song.getUserData().getTimeAdded());
             }
         });
 
@@ -124,8 +124,8 @@ public class GeneratePlaylistsTask implements Task<Void> {
         long len = new Mp3File(item.file.getAbsolutePath()).getLengthInSeconds();
         sb.append(String.format("#EXTINF:%d,%s - %s\n%s\n\n",
                 len,
-                item.song.name,
-                item.song.artistName,
+                item.song.getName(),
+                item.song.getArtistName(),
                 item.file.getName()));
     }
 }

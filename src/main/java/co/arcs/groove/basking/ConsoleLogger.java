@@ -130,7 +130,7 @@ public class ConsoleLogger {
     @Subscribe
     public void onEvent(DownloadSongEvent.ProgressChanged e) {
         ansiPrintProgress(e.fraction);
-        out.print(ansi().a(" ").a(e.task.song.artistName + " - " + e.task.song.name));
+        out.print(ansi().a(" ").a(e.task.song.getArtistName() + " - " + e.task.song.getName()));
     }
 
     @Subscribe

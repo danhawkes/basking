@@ -1,5 +1,6 @@
 package co.arcs.groove.basking.task;
 
+import com.belladati.httpclientandroidlib.HttpResponse;
 import com.google.common.eventbus.EventBus;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.ID3v22Tag;
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.Semaphore;
 
-import ch.boye.httpclientandroidlib.HttpResponse;
 import co.arcs.groove.basking.SyncService;
 import co.arcs.groove.basking.Utils;
 import co.arcs.groove.basking.event.impl.DownloadSongEvent;
@@ -116,11 +116,11 @@ public class DownloadSongTask implements Task<Song> {
                 // Try saving twice; once with old tag data, and again after
                 // discarding corrupt data and starting over
                 try {
-                    id3v2Tag.setTitle(song.name);
-                    id3v2Tag.setArtist(song.artistName);
-                    id3v2Tag.setAlbum(song.albumName);
-                    id3v2Tag.setYear(song.year + "");
-                    Utils.encodeId(song.id, id3v2Tag);
+                    id3v2Tag.setTitle(song.getName());
+                    id3v2Tag.setArtist(song.getArtistName());
+                    id3v2Tag.setAlbum(song.getAlbumName());
+                    id3v2Tag.setYear(song.getYear() + "");
+                    Utils.encodeId(song.getId(), id3v2Tag);
                     mp3File.setId3v2Tag(id3v2Tag);
                     mp3File.save(tempFile2.getAbsolutePath());
                     break;
