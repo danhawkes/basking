@@ -3,47 +3,99 @@ package co.arcs.groove.basking;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.internal.Lists;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import co.arcs.groove.basking.task.SyncTask.Outcome;
 
 public class Cli {
 
-    public static void main(String[] args) {
-        ObjectMapper objectMapper = new ObjectMapper();
+    private static List<String> parseConfigFile(File file) throws IOException {
+        List<String> configArgs = Lists.newArrayList();
+        JsonNode root = new ObjectMapper().readTree(file);
+        JsonNode numConcurrentDownloadsNode = root.get("numConcurrentDownloads");
+        if (numConcurrentDownloadsNode != null) {
+            configArgs.add("--num-concurrent");
+            configArgs.add(numConcurrentDownloadsNode.asText());
+        }
+        JsonNode dryRunNode = root.get("dryRun");
+        if (dryRunNode != null) {
+            if (dryRunNode.asBoolean()) {
+                configArgs.add("--dry-run");
+            }
+        }
+        JsonNode syncDirectoryNode = root.get("syncDirectory");
+        if (syncDirectoryNode != null) {
+            configArgs.add("--sync-dir");
+            configArgs.add(syncDirectoryNode.asText());
+        }
+        JsonNode usernameNode = root.get("username");
+        if (usernameNode != null) {
+            configArgs.add("--username");
+            configArgs.add(usernameNode.asText());
+        }
+        JsonNode passwordNode = root.get("password");
+        if (passwordNode != null) {
+            configArgs.add("--password");
+            configArgs.add(passwordNode.asText());
+        }
+        return configArgs;
+    }
+
+    public static void main(String[] argsArr) {
 
         Config config = new Config();
-
         JCommander jc = new JCommander(config);
         jc.setProgramName("basking");
 
-        try {
-            // Do the initial parse. This will fail if any required parameters
-            // are missing, but will nevertheless populate any that succeed.
-            jc.parse(args);
-        } catch (ParameterException e) {
-            // Only consume the exception if the error is from too few
-            // parameters, as that will be shown later if thers's still an issue
-            // after loading the config file.
-            if (!e.getMessage().startsWith("The following options are required")) {
-                exit1(jc, e);
+        List<String> args = Lists.newArrayList(argsArr);
+
+        // Attempt to read parameters from the config file
+        int configFileParamIndex;
+        if (((configFileParamIndex = args.indexOf(Config.CONFIG_ARG_SHORT)) > 0) || ((configFileParamIndex = args
+                .indexOf(Config.CONFIG_ARG_LONG)) > 0)) {
+            if (args.size() > configFileParamIndex) {
+                // There's a valid config file parameter
+                String configFileParamKey = args.get(configFileParamIndex);
+                String configFileParamValue = args.get(configFileParamIndex + 1);
+                try {
+                    // Create synthetic arguments from the file
+                    List<String> configFileParams = parseConfigFile(new File(configFileParamValue));
+
+                    // Append them to the main args list. Also remove references to the config file.
+                    args.remove(configFileParamKey);
+                    args.remove(configFileParamValue);
+                    args.addAll(configFileParams);
+                } catch (IOException e) {
+                    exit1(jc,
+                            new ParameterException("Could not read file '" + configFileParamValue + "'."));
+                    return;
+                }
             }
         }
-        if (config.help) {
-            jc.usage();
+
+        // Parse
+        try {
+            jc.parse(args.toArray(new String[args.size()]));
+        } catch (ParameterException e) {
+            exit1(jc, e);
             return;
         }
 
-        if (config.version) {
+        // Special cases
+        if (config.help) {
+            jc.usage();
+            return;
+        } else if (config.version) {
             try {
                 Properties p = new Properties();
                 InputStream is = Cli.class.getResourceAsStream(
@@ -52,61 +104,12 @@ public class Cli {
                 String version = p.getProperty("version", null);
                 System.out.println("basking v" + version);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                Throwables.propagate(e);
             }
             return;
         }
 
-        // Load the config file, if present, and insert additional arguments
-        if (config.configFile != null) {
-            List<String> configArgs = Lists.newArrayList();
-            try {
-                JsonNode root = objectMapper.readTree(config.configFile);
-                JsonNode numConcurrentDownloadsNode = root.get("numConcurrentDownloads");
-                if (numConcurrentDownloadsNode != null) {
-                    configArgs.add("--num-concurrent");
-                    configArgs.add(numConcurrentDownloadsNode.asText());
-                }
-                JsonNode dryRunNode = root.get("dryRun");
-                if (dryRunNode != null) {
-                    if (dryRunNode.asBoolean()) {
-                        configArgs.add("--dry-run");
-                    }
-                }
-                JsonNode syncDirectoryNode = root.get("syncDirectory");
-                if (syncDirectoryNode != null) {
-                    configArgs.add("--sync-dir");
-                    configArgs.add(syncDirectoryNode.asText());
-                }
-                JsonNode usernameNode = root.get("username");
-                if (usernameNode != null) {
-                    configArgs.add("--username");
-                    configArgs.add(usernameNode.asText());
-                }
-                JsonNode passwordNode = root.get("password");
-                if (passwordNode != null) {
-                    configArgs.add("--password");
-                    configArgs.add(passwordNode.asText());
-                }
-                args = configArgs.toArray(new String[configArgs.size()]);
-            } catch (JsonMappingException e1) {
-                exit1(jc, e1);
-                return;
-            } catch (JsonParseException e1) {
-                exit1(jc, e1);
-                return;
-            } catch (IOException e1) {
-                exit1(jc, e1);
-                return;
-            }
-        }
-        // Parse again, hopefully with a complete set of arguments
-        try {
-            jc.parse(args);
-            new Cli(config);
-        } catch (ParameterException e) {
-            exit1(jc, e);
-        }
+        new Runner(config).run();
     }
 
     private static void exit1(JCommander jc, Exception e1) {
@@ -115,25 +118,34 @@ public class Cli {
         System.exit(1);
     }
 
-    private final SyncService syncService;
-    private final ConsoleLogger consoleLogger;
+    private static class Runner {
 
-    public Cli(Config config) {
-        consoleLogger = new ConsoleLogger();
+        private final Config config;
 
-        syncService = new SyncService();
-        syncService.getEventBus().register(consoleLogger);
+        public Runner(Config config) {
+            this.config = config;
+        }
 
-        ListenableFuture<Outcome> serviceOutcome = syncService.start(config);
+        void run() {
+            // Disable other logging
+            Logger rootLogger = Logger.getLogger("");
+            rootLogger.removeHandler(rootLogger.getHandlers()[0]);
 
-        try {
-            Outcome outcome = serviceOutcome.get();
-            if (outcome.failedToDownload > 0) {
+            SyncService syncService = new SyncService();
+
+            ConsoleLogger consoleLogger = new ConsoleLogger();
+            syncService.getEventBus().register(consoleLogger);
+
+            ListenableFuture<Outcome> serviceOutcome = syncService.start(config);
+
+            try {
+                Outcome outcome = serviceOutcome.get();
+                if (outcome.failedToDownload > 0) {
+                    System.exit(1);
+                }
+            } catch (Throwable t) {
                 System.exit(1);
             }
-        } catch (Throwable t) {
-            System.err.println(t);
-            System.exit(1);
         }
     }
 }

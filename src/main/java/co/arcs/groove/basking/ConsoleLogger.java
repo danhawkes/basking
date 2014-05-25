@@ -23,6 +23,10 @@ import co.arcs.groove.basking.event.impl.DownloadSongsEvent;
 import co.arcs.groove.basking.event.impl.GeneratePlaylistsEvent;
 import co.arcs.groove.basking.event.impl.GetSongsToSyncEvent;
 import co.arcs.groove.basking.event.impl.SyncEvent;
+import co.arcs.groove.basking.event.impl.SyncEvent.FinishedWithError;
+import co.arcs.groove.thresher.GroovesharkException.InvalidCredentialsException;
+import co.arcs.groove.thresher.GroovesharkException.RateLimitedException;
+import co.arcs.groove.thresher.GroovesharkException.ServerErrorException;
 
 import static org.fusesource.jansi.Ansi.ansi;
 
@@ -69,7 +73,22 @@ public class ConsoleLogger {
         ansiPrintPrimaryLn(message);
     }
 
-    // Query API for use information
+    @Subscribe
+    public void onEvent(FinishedWithError event) {
+        String message;
+        if (event.e.getCause() instanceof InvalidCredentialsException) {
+            message = "Username/password combination is not valid.";
+        } else if (event.e instanceof ServerErrorException) {
+            message = "Server is not responding as expected. If this error persists, please file a bug at https://github.com/danhawkes/basking/issues.";
+        } else if (event.e instanceof RateLimitedException) {
+            message = "Your IP has been rate-limited! Please try again later.";
+        } else {
+            message = event.e.toString();
+        }
+        ansiPrintErrorLn(message);
+    }
+
+    // Query API for user information
 
     @Subscribe
     public void onEvent(GetSongsToSyncEvent.Started e) {
@@ -170,9 +189,18 @@ public class ConsoleLogger {
         out.flush();
     }
 
-    void ansiPrintSecondary(String message) {
+    void ansiPrintErrorLn(String message) {
         ansiPrintNewlineIfReqd();
-        out.print(ansi().a(message));
+        out.println(ansi().newline()
+                .bold()
+                .fg(Color.RED)
+                .a("\u27F6")
+                .reset()
+                .bold()
+                .a("  ")
+                .a(message)
+                .reset()
+                .newline());
         out.flush();
     }
 

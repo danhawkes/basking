@@ -11,6 +11,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Config {
 
+    public static final String CONFIG_ARG_SHORT = "-cfg";
+    public static final String CONFIG_ARG_LONG = "--config";
+
     @JsonProperty("syncDirectory")
     @Parameter(
             names = {"-dir", "--sync-dir"},
@@ -40,7 +43,8 @@ public class Config {
     public int numConcurrent = 1;
 
     @JsonIgnore
-    @Parameter(names = {"-cfg", "--config"}, description = "JSON configuration file to load.")
+    @Parameter(names = {CONFIG_ARG_SHORT, CONFIG_ARG_LONG},
+            description = "JSON configuration file to load.")
     public File configFile;
 
     @JsonProperty("dryRun")
