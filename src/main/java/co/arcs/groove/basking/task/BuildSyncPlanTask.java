@@ -20,6 +20,10 @@ import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
 import co.arcs.groove.thresher.Song;
 
+/**
+ * Builds a plan of what needs to be done to synchronise the contents of the sync directory
+ * with a collection of songs.
+ */
 public class BuildSyncPlanTask implements Task<SyncPlan> {
 
     public static class SyncPlan {
@@ -70,9 +74,20 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
     private final File syncPath;
     private final Set<Song> songs;
 
-    public BuildSyncPlanTask(EventBus bus, File syncPath, Set<Song> songs) {
+    /**
+     * Creates a new sync plan task.
+     *
+     * @param bus
+     *         The bus on which to post {@link co.arcs.groove.basking.event.impl.BuildSyncPlanEvent}
+     *         instances.
+     * @param syncDir
+     *         The directory to be synchronised.
+     * @param songs
+     *         The songs that {@syncDir} should contain.
+     */
+    public BuildSyncPlanTask(EventBus bus, File syncDir, Set<Song> songs) {
         this.bus = bus;
-        this.syncPath = syncPath;
+        this.syncPath = syncDir;
         this.songs = songs;
     }
 
