@@ -159,7 +159,6 @@
         <snapshotRepository>
             <id>arcs.co-snapshots</id>
             <url>https://arcs.co/archiva/repository/snapshots/</url>
-            <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
 </project>
