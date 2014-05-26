@@ -65,7 +65,7 @@ public class BuildSyncPlanTaskTest {
         byte[] unmanagedFile = "test".getBytes();
 
         // Create present, managed files
-        for (int i : ContiguousSet.create(FILES_PRESENT, DiscreteDomain.integers())) {
+        for (int i : iterable(FILES_PRESENT)) {
             File f = new File(tempDir.getRoot(), genManagedFileName(i));
             Mp3File mp3 = new Mp3File(mp3File);
             ID3v2 tag = mp3.getId3v2Tag();
@@ -82,14 +82,14 @@ public class BuildSyncPlanTaskTest {
         // Create a sync cache file
         File cacheFile = tempDir.newFile(BuildSyncPlanTask.CACHE_FILENAME);
         StringBuilder sb = new StringBuilder();
-        for (int i : ContiguousSet.create(FILES_PRESENT, DiscreteDomain.integers())) {
+        for (int i : iterable(FILES_PRESENT)) {
             sb.append(String.format("%d|%s\n", i, genManagedFileName(i)));
         }
         Files.write(sb.toString().getBytes(Charsets.UTF_8), cacheFile);
 
         // Wanted files
         songs = new HashSet<Song>();
-        for (int i : ContiguousSet.create(FILES_WANTED, DiscreteDomain.integers())) {
+        for (int i : iterable(FILES_WANTED)) {
             Song s = mock(Song.class);
             when(s.getId()).thenReturn(i);
             songs.add(s);
@@ -107,6 +107,10 @@ public class BuildSyncPlanTaskTest {
 
     private void deleteSyncCacheFile() {
         assertTrue(new File(tempDir.getRoot(), BuildSyncPlanTask.CACHE_FILENAME).delete());
+    }
+
+    private static Iterable<Integer> iterable(Range<Integer> range) {
+        return ContiguousSet.create(range, DiscreteDomain.integers());
     }
 
     private static int sizeOf(Range<Integer> range) {
@@ -148,6 +152,6 @@ public class BuildSyncPlanTaskTest {
         assertTrue(String.format(
                 "Expected task with sync cache to take <= 1/2 the time of regular task. Actual times were %d and %d ms.",
                 dtWithCache,
-                dtWithoutCache), dtWithCache <= (dtWithoutCache /2));
+                dtWithoutCache), dtWithCache <= (dtWithoutCache / 2));
     }
 }

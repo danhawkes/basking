@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.CharStreams;
-import com.google.common.io.LineProcessor;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -35,8 +34,6 @@ import co.arcs.groove.thresher.Song;
  * with a collection of songs.
  */
 public class BuildSyncPlanTask implements Task<SyncPlan> {
-
-    public static final String CACHE_FILENAME = ".gssynccache";
 
     public static class SyncPlan {
 
@@ -82,8 +79,9 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
         }
     }
 
+    public static final String CACHE_FILENAME = WriteCacheFileTask.CACHE_FILENAME;
     private final EventBus bus;
-    private final File syncPath;
+    private final File syncDir;
     private final Set<Song> songs;
 
     /**
@@ -99,7 +97,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
      */
     public BuildSyncPlanTask(EventBus bus, File syncDir, Set<Song> songs) {
         this.bus = bus;
-        this.syncPath = syncDir;
+        this.syncDir = syncDir;
         this.songs = songs;
     }
 
@@ -111,7 +109,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
         SyncPlan syncPlan = buildSyncPlanUsingCache(songs);
 
         if (syncPlan == null) {
-            syncPlan = buildSyncPlanByAnalysingFiles();
+            syncPlan = buildSyncPlanByAnalysingFiles(songs);
         }
 
         bus.post(new BuildSyncPlanEvent.Finished(this,
@@ -122,10 +120,10 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
         return syncPlan;
     }
 
-    private SyncPlan buildSyncPlanByAnalysingFiles() {
+    private SyncPlan buildSyncPlanByAnalysingFiles(Set<Song> songs) {
 
         // Get a list of all non-hidden mp3 files
-        List<File> files = Lists.newArrayList(syncPath.listFiles(new FilenameFilter() {
+        List<File> files = Lists.newArrayList(syncDir.listFiles(new FilenameFilter() {
 
             @Override
             public boolean accept(File arg0, String arg1) {
@@ -162,7 +160,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
                 existingSongs.remove(id);
             } else {
                 // Wanted song is absent, so download
-                syncPlanItems.add(new Item(new File(syncPath,
+                syncPlanItems.add(new Item(new File(syncDir,
                         Utils.getDiskName(wantedSongs.get(id))),
                         Action.DOWNLOAD,
                         wantedSongs.get(id)
@@ -184,48 +182,37 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
      */
     @Nullable
     private SyncPlan buildSyncPlanUsingCache(Collection<Song> songs) throws IOException {
-        File cacheFile = new File(syncPath, CACHE_FILENAME);
+        File cacheFile = new File(syncDir, CACHE_FILENAME);
         if (cacheFile.exists()) {
 
             ImmutableList.Builder<SyncPlan.Item> items = ImmutableList.builder();
 
             InputStream is = new BufferedInputStream(new FileInputStream(cacheFile));
-            Map<Integer, File> cacheMap = CharStreams.readLines(new InputStreamReader(is),
-                    new LineProcessor<Map<Integer, File>>() {
-
-                        Map<Integer, File> map = Maps.newHashMap();
-
-                        @Override
-                        public boolean processLine(String line) throws IOException {
-                            String[] split = line.split("\\|");
-                            map.put(Integer.valueOf(split[0]), new File(syncPath, split[1]));
-                            return true;
-                        }
-
-                        @Override
-                        public Map<Integer, File> getResult() {
-                            return map;
-                        }
-                    }
-            );
+            Map<Integer, String> cacheMap = CharStreams.readLines(new InputStreamReader(is),
+                    WriteCacheFileTask.newCacheFileLineProcessor());
             is.close();
+
+            int progress = 0;
 
             for (Song song : songs) {
                 if (cacheMap.containsKey(song.getId())) {
                     // Wanted song is in cache, so leave as is
-                    items.add(new Item(cacheMap.get(song.getId()), Action.LEAVE, song));
+                    items.add(new Item(new File(syncDir, cacheMap.get(song.getId())),
+                            Action.LEAVE,
+                            song));
                     cacheMap.remove(song.getId());
                 } else {
                     // Wanted song is absent, so download
-                    items.add(new Item(new File(syncPath, Utils.getDiskName(song)),
+                    items.add(new Item(new File(syncDir, Utils.getDiskName(song)),
                             Action.DOWNLOAD,
                             song));
                 }
+                bus.post(new BuildSyncPlanEvent.ProgressChanged(this, progress++, songs.size()));
             }
 
             // Unwanted stuff that's in the cache should be removed
-            for (File file : cacheMap.values()) {
-                items.add(new Item(file, Action.DELETE, null));
+            for (String fileName : cacheMap.values()) {
+                items.add(new Item(new File(syncDir, fileName), Action.DELETE, null));
             }
 
             return new SyncPlan(items.build());

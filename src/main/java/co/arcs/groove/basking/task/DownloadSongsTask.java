@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -16,6 +17,16 @@ import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.Song;
 
+/**
+ * Task that downloads a set of songs.
+ *
+ * <p>Unlike other tasks, this will succeed even if one or more of its subtasks fail. The rationale
+ * for this is that it's common for individual downloads to fail because of transient API issues or
+ * connectivity interruptions. The sync process (including updating playlists and caches) is
+ * allowed to continue as some progress is better than no progress.</p>
+ *
+ * <p>A collection of the successfully downloaded songs is returned.</p>
+ */
 public class DownloadSongsTask implements Task<List<Song>> {
 
     private final EventBus bus;
@@ -53,7 +64,9 @@ public class DownloadSongsTask implements Task<List<Song>> {
                     tempPath,
                     concurrentJobsSemaphore)));
         }
-        List<Song> result = Futures.successfulAsList(downloadFutures).get();
+
+        List<Song> result = Lists.newArrayList(Futures.successfulAsList(downloadFutures).get());
+        result.removeAll(Collections.singleton(null));
 
         bus.post(new DownloadSongsEvent.Finished(this));
 

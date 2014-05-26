@@ -178,14 +178,34 @@ public class SyncTask implements Task<SyncTask.Outcome> {
                                 return Futures.immediateFuture(null);
                             } else {
                                 SyncPlan syncPlan = (SyncPlan) input.get(0);
-
                                 List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(
                                         1));
-                                downloadedSongs.removeAll(Collections.singleton(null));
 
                                 return exec.submit(new GeneratePlaylistsTask(bus,
                                         config.syncDir,
-                                        syncPlan.items,
+                                        syncPlan,
+                                        downloadedSongs));
+                            }
+                        }
+                    }
+            );
+
+            // Schedule write cache file task
+            final ListenableFuture<Integer> writeCacheFileFuture = Futures.transform(Futures.allAsList(
+                            buildSyncPlanFuture,
+                            downloadSongsFuture), new AsyncFunction<List<Object>, Integer>() {
+                        @Override
+                        public ListenableFuture<Integer> apply(List<Object> input) throws Exception {
+
+                            if (config.dryRun) {
+                                return Futures.immediateFuture(null);
+                            } else {
+                                SyncPlan syncPlan = (SyncPlan) input.get(0);
+                                List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(
+                                        1));
+
+                                return exec.submit(new WriteCacheFileTask(config.syncDir,
+                                        syncPlan,
                                         downloadedSongs));
                             }
                         }
@@ -196,7 +216,8 @@ public class SyncTask implements Task<SyncTask.Outcome> {
             ListenableFuture<Outcome> outcomeFuture = Futures.transform(Futures.allAsList(
                             deleteSongsFuture,
                             downloadSongsFuture,
-                            generatePlaylistsFuture), new Function<List<Object>, Outcome>() {
+                            generatePlaylistsFuture,
+                            writeCacheFileFuture), new Function<List<Object>, Outcome>() {
 
                         @Override
                         public Outcome apply(List<Object> input) {

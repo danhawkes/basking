@@ -27,16 +27,16 @@ public class GeneratePlaylistsTask implements Task<Void> {
 
     private final EventBus bus;
     private final File syncPath;
-    private final List<SyncPlan.Item> syncPlanItems;
+    private final SyncPlan syncPlan;
     private final List<Song> downloadedSongs;
 
     public GeneratePlaylistsTask(EventBus bus,
             File syncPath,
-            List<SyncPlan.Item> syncPlanItems,
+            SyncPlan syncPlan,
             List<Song> downloadedSongs) {
         this.bus = bus;
         this.syncPath = syncPath;
-        this.syncPlanItems = Lists.newArrayList(syncPlanItems);
+        this.syncPlan = syncPlan;
         this.downloadedSongs = downloadedSongs;
     }
 
@@ -49,7 +49,7 @@ public class GeneratePlaylistsTask implements Task<Void> {
         List<SyncPlan.Item> favoriteItems = Lists.newArrayList();
 
         // Filter out planned items that failed
-        Collection<SyncPlan.Item> successfulItems = Collections2.filter(syncPlanItems,
+        Collection<SyncPlan.Item> successfulItems = Collections2.filter(syncPlan.items,
                 new Predicate<SyncPlan.Item>() {
 
                     @Override
