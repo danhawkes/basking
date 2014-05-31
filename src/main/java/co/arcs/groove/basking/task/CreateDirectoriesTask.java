@@ -14,6 +14,7 @@ public class CreateDirectoriesTask implements Callable<Void> {
         this.tempPath = tempPath;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public Void call() throws Exception {
 

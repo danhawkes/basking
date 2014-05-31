@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 public class WriteCacheFileTaskTest {
 
+    @SuppressWarnings("CanBeFinal")
     @Rule
     public TemporaryFolder tempDir = new TemporaryFolder();
 
@@ -46,9 +47,6 @@ public class WriteCacheFileTaskTest {
             itemsBuilder.add(new Item(mockFileWithSongId(i), Action.DELETE, null));
         }
         SyncPlan plan = new SyncPlan(itemsBuilder.build());
-
-        for (int i = 0; i < 3; i++) {
-        }
 
         Integer writtenItems = new WriteCacheFileTask(tempDir.getRoot(),
                 plan,

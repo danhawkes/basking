@@ -17,6 +17,7 @@ public class SyncServiceTest {
     private static final String USERNAME = "jka32muwfhqt3jf4qbubc8dp@mailinator.com";
     private static final String PASSWORD = "jka32muwfhqt3jf4qbubc8dp";
 
+    @SuppressWarnings("CanBeFinal")
     @Rule
     public TemporaryFolder tempDir = new TemporaryFolder();
 

@@ -19,7 +19,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,17 +45,16 @@ public class BuildSyncPlanTaskTest {
     private static final int EXPECTED_DOWNLOAD = sizeOf(FILES_WANTED) - EXPECTED_LEAVE;
     private static final int EXPECTED_DELETE = sizeOf(FILES_PRESENT) - EXPECTED_LEAVE;
 
+    @SuppressWarnings("CanBeFinal")
     @Rule
     public TemporaryFolder tempDir = new TemporaryFolder();
 
-    public Set<Song> songs = new HashSet<Song>();
+    private Set<Song> songs = new HashSet<Song>();
 
     @Before
     public void setup() throws IOException, InvalidDataException, UnsupportedTagException, NotSupportedException {
 
         // A managed file
-        InputStream is = BuildSyncPlanTaskTest.class.getClassLoader()
-                .getResourceAsStream("test.mp3");
         String mp3File = BuildSyncPlanTaskTest.class.getClassLoader()
                 .getResource("test.mp3")
                 .getPath();
@@ -120,18 +118,18 @@ public class BuildSyncPlanTaskTest {
     @Test
     public void withSyncCache() throws Exception {
         SyncPlan syncPlan = new BuildSyncPlanTask(new EventBus(), tempDir.getRoot(), songs).call();
-        assertEquals(EXPECTED_LEAVE, syncPlan.leave);
-        assertEquals(EXPECTED_DOWNLOAD, syncPlan.download);
-        assertEquals(EXPECTED_DELETE, syncPlan.delete);
+        assertEquals(EXPECTED_LEAVE, syncPlan.getToLeave());
+        assertEquals(EXPECTED_DOWNLOAD, syncPlan.getToDownload());
+        assertEquals(EXPECTED_DELETE, syncPlan.getToDelete());
     }
 
     @Test
     public void withoutSyncCache() throws Exception {
         deleteSyncCacheFile();
         SyncPlan syncPlan = new BuildSyncPlanTask(new EventBus(), tempDir.getRoot(), songs).call();
-        assertEquals(EXPECTED_LEAVE, syncPlan.leave);
-        assertEquals(EXPECTED_DOWNLOAD, syncPlan.download);
-        assertEquals(EXPECTED_DELETE, syncPlan.delete);
+        assertEquals(EXPECTED_LEAVE, syncPlan.getToLeave());
+        assertEquals(EXPECTED_DOWNLOAD, syncPlan.getToDownload());
+        assertEquals(EXPECTED_DELETE, syncPlan.getToDelete());
     }
 
     @Test

@@ -17,9 +17,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsProgressChangedEvent;
-import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsStartedEvent;
+import co.arcs.groove.basking.event.Events.GeneratePlaylistsFinishedEvent;
+import co.arcs.groove.basking.event.Events.GeneratePlaylistsProgressChangedEvent;
+import co.arcs.groove.basking.event.Events.GeneratePlaylistsStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
@@ -51,21 +51,22 @@ public class GeneratePlaylistsTask implements Task<Void> {
         List<SyncPlan.Item> favoriteItems = Lists.newArrayList();
 
         // Filter out planned items that failed
-        Collection<SyncPlan.Item> successfulItems = Collections2.filter(syncPlan.items,
+        Collection<SyncPlan.Item> successfulItems = Collections2.filter(syncPlan.getItems(),
                 new Predicate<SyncPlan.Item>() {
 
                     @Override
                     public boolean apply(Item item) {
-                        return (item.action != Action.DOWNLOAD) || (downloadedSongs.contains(item.song));
+                        return (item.getAction() != Action.DOWNLOAD) || (downloadedSongs.contains(
+                                item.getSong()));
                     }
                 }
         );
 
         // Separate out 'favorited' subset
         for (SyncPlan.Item item : successfulItems) {
-            if ((item.action == Action.DOWNLOAD) || (item.action == Action.LEAVE)) {
+            if ((item.getAction() == Action.DOWNLOAD) || (item.getAction() == Action.LEAVE)) {
                 collectionItems.add(item);
-                if (item.song.getUserData().isFavorited()) {
+                if (item.getSong().getUserData().isFavorited()) {
                     favoriteItems.add(item);
                 }
             }
@@ -76,14 +77,20 @@ public class GeneratePlaylistsTask implements Task<Void> {
 
             @Override
             public int compare(Item o1, Item o2) {
-                return o2.song.getUserData().getTimeFavorited().compareTo(o1.song.getUserData().getTimeFavorited());
+                return o2.getSong()
+                        .getUserData()
+                        .getTimeFavorited()
+                        .compareTo(o1.getSong().getUserData().getTimeFavorited());
             }
         });
         Collections.sort(collectionItems, new Comparator<SyncPlan.Item>() {
 
             @Override
             public int compare(Item o1, Item o2) {
-                return o2.song.getUserData().getTimeAdded().compareTo(o1.song.getUserData().getTimeAdded());
+                return o2.getSong()
+                        .getUserData()
+                        .getTimeAdded()
+                        .compareTo(o1.getSong().getUserData().getTimeAdded());
             }
         });
 
@@ -123,11 +130,11 @@ public class GeneratePlaylistsTask implements Task<Void> {
     private static void writeToPlaylist(StringBuilder sb,
             SyncPlan.Item item) throws UnsupportedTagException, InvalidDataException, IOException {
 
-        long len = new Mp3File(item.file.getAbsolutePath()).getLengthInSeconds();
+        long len = new Mp3File(item.getFile().getAbsolutePath()).getLengthInSeconds();
         sb.append(String.format("#EXTINF:%d,%s - %s\n%s\n\n",
                 len,
-                item.song.getName(),
-                item.song.getArtistName(),
-                item.file.getName()));
+                item.getSong().getName(),
+                item.getSong().getArtistName(),
+                item.getFile().getName()));
     }
 }

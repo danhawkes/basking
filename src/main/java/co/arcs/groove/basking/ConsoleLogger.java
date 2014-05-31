@@ -16,22 +16,22 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.Locale;
 
-import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanProgressChangedEvent;
-import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanStartedEvent;
-import co.arcs.groove.basking.event.impl.Events.DeleteFilesFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.DeleteFilesStartedEvent;
-import co.arcs.groove.basking.event.impl.Events.DownloadSongFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.DownloadSongProgressChangedEvent;
-import co.arcs.groove.basking.event.impl.Events.DownloadSongsStartedEvent;
-import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsProgressChangedEvent;
-import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsStartedEvent;
-import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncProgressChangedEvent;
-import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncStartedEvent;
-import co.arcs.groove.basking.event.impl.Events.SyncProcessFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.SyncProcessFinishedWithErrorEvent;
-import co.arcs.groove.basking.event.impl.Events.SyncProcessStartedEvent;
+import co.arcs.groove.basking.event.Events.BuildSyncPlanFinishedEvent;
+import co.arcs.groove.basking.event.Events.BuildSyncPlanProgressChangedEvent;
+import co.arcs.groove.basking.event.Events.BuildSyncPlanStartedEvent;
+import co.arcs.groove.basking.event.Events.DeleteFilesFinishedEvent;
+import co.arcs.groove.basking.event.Events.DeleteFilesStartedEvent;
+import co.arcs.groove.basking.event.Events.DownloadSongFinishedEvent;
+import co.arcs.groove.basking.event.Events.DownloadSongProgressChangedEvent;
+import co.arcs.groove.basking.event.Events.DownloadSongsStartedEvent;
+import co.arcs.groove.basking.event.Events.GeneratePlaylistsProgressChangedEvent;
+import co.arcs.groove.basking.event.Events.GeneratePlaylistsStartedEvent;
+import co.arcs.groove.basking.event.Events.GetSongsToSyncFinishedEvent;
+import co.arcs.groove.basking.event.Events.GetSongsToSyncProgressChangedEvent;
+import co.arcs.groove.basking.event.Events.GetSongsToSyncStartedEvent;
+import co.arcs.groove.basking.event.Events.SyncProcessFinishedEvent;
+import co.arcs.groove.basking.event.Events.SyncProcessFinishedWithErrorEvent;
+import co.arcs.groove.basking.event.Events.SyncProcessStartedEvent;
 import co.arcs.groove.thresher.GroovesharkException.InvalidCredentialsException;
 import co.arcs.groove.thresher.GroovesharkException.RateLimitedException;
 import co.arcs.groove.thresher.GroovesharkException.ServerErrorException;
@@ -81,6 +81,7 @@ public class ConsoleLogger {
         ansiPrintPrimaryLn(message);
     }
 
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     @Subscribe
     public void onEvent(SyncProcessFinishedWithErrorEvent event) {
         String message;
@@ -129,9 +130,9 @@ public class ConsoleLogger {
     public void onEvent(BuildSyncPlanFinishedEvent e) {
         ansiPrintSecondaryLn(String.format(Locale.US,
                 "Download %d, delete %d, and leave %d.",
-                e.getDownload(),
-                e.getDelete(),
-                e.getLeave()));
+                e.getToDownload(),
+                e.getToDelete(),
+                e.getToLeave()));
     }
 
     // Delete files
@@ -180,7 +181,7 @@ public class ConsoleLogger {
 
     // Printers
 
-    boolean needNewline;
+    private boolean needNewline;
 
     void ansiPrintPrimaryLn(String message) {
         ansiPrintNewlineIfReqd();

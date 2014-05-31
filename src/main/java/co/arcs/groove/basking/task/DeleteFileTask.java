@@ -5,8 +5,8 @@ import com.google.common.eventbus.EventBus;
 import java.io.File;
 import java.io.IOException;
 
-import co.arcs.groove.basking.event.impl.Events.DeleteFileFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.DeleteFileStartedEvent;
+import co.arcs.groove.basking.event.Events.DeleteFileFinishedEvent;
+import co.arcs.groove.basking.event.Events.DeleteFileStartedEvent;
 
 public class DeleteFileTask implements Task<File> {
 

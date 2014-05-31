@@ -17,9 +17,9 @@ import java.util.concurrent.Semaphore;
 
 import co.arcs.groove.basking.SyncService;
 import co.arcs.groove.basking.Utils;
-import co.arcs.groove.basking.event.impl.Events.DownloadSongFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.DownloadSongProgressChangedEvent;
-import co.arcs.groove.basking.event.impl.Events.DownloadSongStartedEvent;
+import co.arcs.groove.basking.event.Events.DownloadSongFinishedEvent;
+import co.arcs.groove.basking.event.Events.DownloadSongProgressChangedEvent;
+import co.arcs.groove.basking.event.Events.DownloadSongStartedEvent;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.Song;
 
@@ -74,7 +74,7 @@ public class DownloadSongTask implements Task<Song> {
                 byte[] buffer = new byte[INPUT_BUFFER_LEN];
 
                 long len = response.getEntity().getContentLength();
-                int read = 0;
+                int read;
                 int readTotal = 0;
                 float lastReportedProgress = 0;
 
@@ -110,7 +110,7 @@ public class DownloadSongTask implements Task<Song> {
             }
 
             // Get/create id3v2 tag
-            ID3v2 id3v2Tag = null;
+            ID3v2 id3v2Tag;
             if (mp3File.hasId3v2Tag()) {
                 id3v2Tag = mp3File.getId3v2Tag();
             } else {

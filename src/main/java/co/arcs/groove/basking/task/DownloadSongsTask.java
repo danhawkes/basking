@@ -11,8 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-import co.arcs.groove.basking.event.impl.Events.DownloadSongsFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.DownloadSongsStartedEvent;
+import co.arcs.groove.basking.event.Events.DownloadSongsFinishedEvent;
+import co.arcs.groove.basking.event.Events.DownloadSongsStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 import co.arcs.groove.thresher.Client;
@@ -23,8 +23,8 @@ import co.arcs.groove.thresher.Song;
  *
  * <p>Unlike other tasks, this will succeed even if one or more of its subtasks fail. The rationale
  * for this is that it's common for individual downloads to fail because of transient API issues or
- * connectivity interruptions. The sync process (including updating playlists and caches) is
- * allowed to continue as some progress is better than no progress.</p>
+ * connectivity interruptions. The sync process (including updating playlists and caches) is allowed
+ * to continue as some progress is better than no progress.</p>
  *
  * <p>A collection of the successfully downloaded songs is returned.</p>
  */
@@ -60,8 +60,8 @@ public class DownloadSongsTask implements Task<List<Song>> {
         for (Item item : syncPlanItems) {
             downloadFutures.add(executor.submit(new DownloadSongTask(bus,
                     client,
-                    item.song,
-                    item.file,
+                    item.getSong(),
+                    item.getFile(),
                     tempPath,
                     concurrentJobsSemaphore)));
         }

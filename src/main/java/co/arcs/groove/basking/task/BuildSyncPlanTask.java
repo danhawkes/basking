@@ -23,9 +23,9 @@ import javax.annotation.Nullable;
 
 import co.arcs.groove.basking.SyncService;
 import co.arcs.groove.basking.Utils;
-import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanProgressChangedEvent;
-import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanStartedEvent;
+import co.arcs.groove.basking.event.Events.BuildSyncPlanFinishedEvent;
+import co.arcs.groove.basking.event.Events.BuildSyncPlanProgressChangedEvent;
+import co.arcs.groove.basking.event.Events.BuildSyncPlanStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
@@ -39,10 +39,10 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
 
     public static class SyncPlan {
 
-        public final ImmutableList<Item> items;
-        public final int download;
-        public final int delete;
-        public final int leave;
+        private final ImmutableList<Item> items;
+        private final int download;
+        private final int delete;
+        private final int leave;
 
         public SyncPlan(List<Item> items) {
             this.items = ImmutableList.copyOf(items);
@@ -63,20 +63,48 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
             this.leave = leave;
         }
 
+        public ImmutableList<Item> getItems() {
+            return items;
+        }
+
+        public int getToDownload() {
+            return download;
+        }
+
+        public int getToDelete() {
+            return delete;
+        }
+
+        public int getToLeave() {
+            return leave;
+        }
+
         public static class Item {
 
             public static enum Action {
                 DOWNLOAD, DELETE, LEAVE
             }
 
-            public final File file;
-            public final Action action;
-            public final Song song;
+            private final File file;
+            private final Action action;
+            private final Song song;
 
             public Item(File file, Action action, @Nullable Song songToSync) {
                 this.file = file;
                 this.action = action;
                 this.song = songToSync;
+            }
+
+            public File getFile() {
+                return file;
+            }
+
+            public Action getAction() {
+                return action;
+            }
+
+            public Song getSong() {
+                return song;
             }
         }
     }

@@ -38,13 +38,14 @@ public class WriteCacheFileTask implements Task<Integer> {
     public Integer call() throws Exception {
 
         // Filter out items that were deleted, or that failed to download
-        Collection<Item> items = Collections2.filter(syncPlan.items, new Predicate<Item>() {
+        Collection<Item> items = Collections2.filter(syncPlan.getItems(), new Predicate<Item>() {
             @Override
             public boolean apply(@Nullable Item item) {
-                if (item.action == Action.LEAVE) {
+                if (item.getAction() == Action.LEAVE) {
                     return true;
                 }
-                if (item.action == Action.DOWNLOAD && downloadedSongs.contains(item.song)) {
+                //noinspection RedundantIfStatement
+                if (item.getAction() == Action.DOWNLOAD && downloadedSongs.contains(item.getSong())) {
                     return true;
                 }
                 return false;
@@ -60,7 +61,10 @@ public class WriteCacheFileTask implements Task<Integer> {
 
         StringBuilder sb = new StringBuilder();
         for (Item item : items) {
-            sb.append(item.song.getId() + "|" + item.file.getName() + "\n");
+            sb.append(item.getSong().getId());
+            sb.append("|");
+            sb.append(item.getFile().getName());
+            sb.append("\n");
         }
         return sb.toString().getBytes(Charsets.UTF_8);
     }
@@ -72,6 +76,7 @@ public class WriteCacheFileTask implements Task<Integer> {
     static LineProcessor<Map<Integer, String>> newCacheFileLineProcessor() {
         return new LineProcessor<Map<Integer, String>>() {
 
+            @SuppressWarnings("CanBeFinal")
             Map<Integer, String> map = Maps.newHashMap();
 
             @Override

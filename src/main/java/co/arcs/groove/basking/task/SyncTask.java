@@ -16,9 +16,9 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import co.arcs.groove.basking.Config;
-import co.arcs.groove.basking.event.impl.Events.SyncProcessFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.SyncProcessFinishedWithErrorEvent;
-import co.arcs.groove.basking.event.impl.Events.SyncProcessStartedEvent;
+import co.arcs.groove.basking.event.Events.SyncProcessFinishedEvent;
+import co.arcs.groove.basking.event.Events.SyncProcessFinishedWithErrorEvent;
+import co.arcs.groove.basking.event.Events.SyncProcessStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
 import co.arcs.groove.thresher.Client;
@@ -57,10 +57,6 @@ public class SyncTask implements Task<SyncTask.Outcome> {
     private final File tempPath;
     private final Client client;
     private final Semaphore concurrentJobsSemaphore;
-
-    public static final String FINISHED_FILE_EXTENSION = ".mp3";
-    public static final String TEMP_FILE_EXTENSION_1 = ".tmp.1";
-    public static final String TEMP_FILE_EXTENSION_2 = ".tmp.2";
 
     public SyncTask(EventBus bus, ListeningExecutorService exec, Config config) {
         this.bus = bus;
@@ -137,8 +133,8 @@ public class SyncTask implements Task<SyncTask.Outcome> {
                         @Override
                         public ListenableFuture<List<File>> apply(SyncPlan syncPlan) throws Exception {
                             List<SyncPlan.Item> deletePlanItems = Lists.newArrayList();
-                            for (SyncPlan.Item item : syncPlan.items) {
-                                if (item.action == Action.DELETE) {
+                            for (SyncPlan.Item item : syncPlan.getItems()) {
+                                if (item.getAction() == Action.DELETE) {
                                     deletePlanItems.add(item);
                                 }
                             }
@@ -161,8 +157,8 @@ public class SyncTask implements Task<SyncTask.Outcome> {
                         public ListenableFuture<List<Song>> apply(List<Object> input) throws Exception {
                             SyncPlan syncPlan = (SyncPlan) input.get(0);
                             List<SyncPlan.Item> downloadPlanItems = Lists.newArrayList();
-                            for (SyncPlan.Item item : syncPlan.items) {
-                                if (item.action == Action.DOWNLOAD) {
+                            for (SyncPlan.Item item : syncPlan.getItems()) {
+                                if (item.getAction() == Action.DOWNLOAD) {
                                     downloadPlanItems.add(item);
                                 }
                             }

@@ -7,9 +7,9 @@ import com.google.common.eventbus.EventBus;
 
 import java.util.Set;
 
-import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncFinishedEvent;
-import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncProgressChangedEvent;
-import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncStartedEvent;
+import co.arcs.groove.basking.event.Events.GetSongsToSyncFinishedEvent;
+import co.arcs.groove.basking.event.Events.GetSongsToSyncProgressChangedEvent;
+import co.arcs.groove.basking.event.Events.GetSongsToSyncStartedEvent;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.Song;
 import co.arcs.groove.thresher.User;

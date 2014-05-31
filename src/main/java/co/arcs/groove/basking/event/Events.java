@@ -1,12 +1,12 @@
-package co.arcs.groove.basking.event.impl;
+package co.arcs.groove.basking.event;
 
 import co.arcs.groove.basking.Config;
+import co.arcs.groove.basking.event.EventLevels.HighLevelEvent;
+import co.arcs.groove.basking.event.EventLevels.LowLevelEvent;
+import co.arcs.groove.basking.event.EventLevels.MidLevelEvent;
 import co.arcs.groove.basking.event.TaskEvent.TaskFinishedEvent;
 import co.arcs.groove.basking.event.TaskEvent.TaskProgressChangedEvent;
 import co.arcs.groove.basking.event.TaskEvent.TaskStartedEvent;
-import co.arcs.groove.basking.event.impl.EventLevels.HighLevelEvent;
-import co.arcs.groove.basking.event.impl.EventLevels.LowLevelEvent;
-import co.arcs.groove.basking.event.impl.EventLevels.MidLevelEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask;
 import co.arcs.groove.basking.task.DeleteFileTask;
 import co.arcs.groove.basking.task.DeleteFilesTask;
@@ -53,15 +53,15 @@ public class Events {
             this.leave = leave;
         }
 
-        public int getDownload() {
+        public int getToDownload() {
             return download;
         }
 
-        public int getDelete() {
+        public int getToDelete() {
             return delete;
         }
 
-        public int getLeave() {
+        public int getToLeave() {
             return leave;
         }
     }

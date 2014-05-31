@@ -1,4 +1,4 @@
-package co.arcs.groove.basking.event.impl;
+package co.arcs.groove.basking.event;
 
 public class EventLevels {
 
