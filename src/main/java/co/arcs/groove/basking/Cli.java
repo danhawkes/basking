@@ -61,8 +61,8 @@ public class Cli {
 
         // Attempt to read parameters from the config file
         int configFileParamIndex;
-        if (((configFileParamIndex = args.indexOf(Config.CONFIG_ARG_SHORT)) > 0) || ((configFileParamIndex = args
-                .indexOf(Config.CONFIG_ARG_LONG)) > 0)) {
+        if (((configFileParamIndex = args.indexOf(Config.CONFIG_ARG_SHORT)) >= 0) || ((configFileParamIndex = args
+                .indexOf(Config.CONFIG_ARG_LONG)) >= 0)) {
             if (args.size() > configFileParamIndex) {
                 // There's a valid config file parameter
                 String configFileParamKey = args.get(configFileParamIndex);
