@@ -7,7 +7,6 @@ import com.google.common.collect.Collections2;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 import com.mpatric.mp3agic.InvalidDataException;
-import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
 
 import java.io.File;
@@ -108,7 +107,14 @@ public class GeneratePlaylistsTask implements Task<Void> {
         return null;
     }
 
-    // TODO startIndex and totalItems are a hack
+    /**
+     * Writes a playlist file for the specified items.
+     *
+     * <p>Playlist generation events do not include information about which playlist is being
+     * generated: progress is reported in terms of the total number of items in all playlists. This
+     * method therefore takes two parameters - {@code startIndex} and {@code totalItems} that are
+     * used to indicate the position of this sub-task relative to the larger process.</p>
+     */
     private void writePlaylist(File playlistFile,
             List<SyncPlan.Item> items,
             int startIndex,
@@ -120,19 +126,18 @@ public class GeneratePlaylistsTask implements Task<Void> {
         int i = startIndex;
 
         for (SyncPlan.Item item : items) {
-            writeToPlaylist(sb, item);
+            writeItemToPlaylistBuffer(sb, item);
             bus.post(new GeneratePlaylistsProgressChangedEvent(this, ++i, totalItems));
         }
 
         Files.write(sb.toString(), playlistFile, Charsets.UTF_8);
     }
 
-    private static void writeToPlaylist(StringBuilder sb,
-            SyncPlan.Item item) throws UnsupportedTagException, InvalidDataException, IOException {
-
-        long len = new Mp3File(item.getFile().getAbsolutePath()).getLengthInSeconds();
+    private static void writeItemToPlaylistBuffer(StringBuilder sb, SyncPlan.Item item) {
+        // Note: song length is specified as '-1' (indeterminate), as reading the real value from
+        // the file is very slow (4-5 seconds on Android), and it's largely useless anyway.
         sb.append(String.format("#EXTINF:%d,%s - %s\n%s\n\n",
-                len,
+                -1,
                 item.getSong().getName(),
                 item.getSong().getArtistName(),
                 item.getFile().getName()));
