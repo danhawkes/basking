@@ -11,7 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-import co.arcs.groove.basking.event.impl.DownloadSongsEvent;
+import co.arcs.groove.basking.event.impl.Events.DownloadSongsFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.DownloadSongsStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 import co.arcs.groove.thresher.Client;
@@ -53,7 +54,7 @@ public class DownloadSongsTask implements Task<List<Song>> {
     @Override
     public List<Song> call() throws Exception {
 
-        bus.post(new DownloadSongsEvent.Started(this));
+        bus.post(new DownloadSongsStartedEvent(this));
 
         List<ListenableFuture<Song>> downloadFutures = Lists.newArrayList();
         for (Item item : syncPlanItems) {
@@ -68,7 +69,7 @@ public class DownloadSongsTask implements Task<List<Song>> {
         List<Song> result = Lists.newArrayList(Futures.successfulAsList(downloadFutures).get());
         result.removeAll(Collections.singleton(null));
 
-        bus.post(new DownloadSongsEvent.Finished(this));
+        bus.post(new DownloadSongsFinishedEvent(this));
 
         return result;
     }

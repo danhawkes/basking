@@ -7,7 +7,9 @@ import com.google.common.eventbus.EventBus;
 
 import java.util.Set;
 
-import co.arcs.groove.basking.event.impl.GetSongsToSyncEvent;
+import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncProgressChangedEvent;
+import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncStartedEvent;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.Song;
 import co.arcs.groove.thresher.User;
@@ -29,12 +31,12 @@ public class GetSongsToSyncTask implements Task<Set<Song>> {
     @Override
     public Set<Song> call() throws Exception {
 
-        bus.post(new GetSongsToSyncEvent.Started(this));
-        bus.post(new GetSongsToSyncEvent.ProgressChanged(this, 0, 3));
+        bus.post(new GetSongsToSyncStartedEvent(this));
+        bus.post(new GetSongsToSyncProgressChangedEvent(this, 0, 3));
 
         User user = client.login(username, password);
 
-        bus.post(new GetSongsToSyncEvent.ProgressChanged(this, 1, 3));
+        bus.post(new GetSongsToSyncProgressChangedEvent(this, 1, 3));
 
         // The library.get() response contains favorited songs that do not have
         // the 'favorited' property set. To work around this, favorites are
@@ -43,16 +45,16 @@ public class GetSongsToSyncTask implements Task<Set<Song>> {
         // are 'collected', and some are 'favorited'.
         ImmutableSet<Song> library = ImmutableSet.copyOf(user.library().get());
 
-        bus.post(new GetSongsToSyncEvent.ProgressChanged(this, 2, 3));
+        bus.post(new GetSongsToSyncProgressChangedEvent(this, 2, 3));
 
         ImmutableSet<Song> favorites = ImmutableSet.copyOf(user.favorites().get());
 
         SetView<Song> nonFavorites = Sets.difference(library, favorites);
         SetView<Song> all = Sets.union(nonFavorites, favorites);
 
-        bus.post(new GetSongsToSyncEvent.ProgressChanged(this, 3, 3));
+        bus.post(new GetSongsToSyncProgressChangedEvent(this, 3, 3));
 
-        bus.post(new GetSongsToSyncEvent.Finished(this, all.size()));
+        bus.post(new GetSongsToSyncFinishedEvent(this, all.size()));
 
         return Sets.newHashSet(all);
     }

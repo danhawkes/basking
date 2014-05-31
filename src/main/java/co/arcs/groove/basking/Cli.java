@@ -140,7 +140,7 @@ public class Cli {
 
             try {
                 Outcome outcome = serviceOutcome.get();
-                if (outcome.failedToDownload > 0) {
+                if (outcome.getFailedToDownload() > 0) {
                     System.exit(1);
                 }
             } catch (Throwable t) {

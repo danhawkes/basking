@@ -23,15 +23,17 @@ import javax.annotation.Nullable;
 
 import co.arcs.groove.basking.SyncService;
 import co.arcs.groove.basking.Utils;
-import co.arcs.groove.basking.event.impl.BuildSyncPlanEvent;
+import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanProgressChangedEvent;
+import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
 import co.arcs.groove.thresher.Song;
 
 /**
- * Builds a plan of what needs to be done to synchronise the contents of the sync directory
- * with a collection of songs.
+ * Builds a plan of what needs to be done to synchronise the contents of the sync directory with a
+ * collection of songs.
  */
 public class BuildSyncPlanTask implements Task<SyncPlan> {
 
@@ -88,8 +90,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
      * Creates a new sync plan task.
      *
      * @param bus
-     *         The bus on which to post {@link co.arcs.groove.basking.event.impl.BuildSyncPlanEvent}
-     *         instances.
+     *         The bus on which to post events.
      * @param syncDir
      *         The directory to be synchronised.
      * @param songs
@@ -104,7 +105,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
     @Override
     public SyncPlan call() throws Exception {
 
-        bus.post(new BuildSyncPlanEvent.Started(this));
+        bus.post(new BuildSyncPlanStartedEvent(this));
 
         SyncPlan syncPlan = buildSyncPlanUsingCache(songs);
 
@@ -112,7 +113,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
             syncPlan = buildSyncPlanByAnalysingFiles(songs);
         }
 
-        bus.post(new BuildSyncPlanEvent.Finished(this,
+        bus.post(new BuildSyncPlanFinishedEvent(this,
                 syncPlan.download,
                 syncPlan.delete,
                 syncPlan.leave));
@@ -132,7 +133,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
         }));
 
         int progress = 0;
-        bus.post(new BuildSyncPlanEvent.ProgressChanged(this, progress++, files.size()));
+        bus.post(new BuildSyncPlanProgressChangedEvent(this, progress++, files.size()));
 
         Map<Integer, File> existingSongs = Maps.newHashMap();
         for (File f : files) {
@@ -141,7 +142,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
             if (id != Utils.ID_NONE) {
                 existingSongs.put(id, f);
             }
-            bus.post(new BuildSyncPlanEvent.ProgressChanged(this, progress++, files.size()));
+            bus.post(new BuildSyncPlanProgressChangedEvent(this, progress++, files.size()));
         }
 
         Map<Integer, Song> wantedSongs = Maps.newHashMap();
@@ -207,7 +208,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
                             Action.DOWNLOAD,
                             song));
                 }
-                bus.post(new BuildSyncPlanEvent.ProgressChanged(this, progress++, songs.size()));
+                bus.post(new BuildSyncPlanProgressChangedEvent(this, progress++, songs.size()));
             }
 
             // Unwanted stuff that's in the cache should be removed

@@ -16,14 +16,22 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.Locale;
 
-import co.arcs.groove.basking.event.impl.BuildSyncPlanEvent;
-import co.arcs.groove.basking.event.impl.DeleteFilesEvent;
-import co.arcs.groove.basking.event.impl.DownloadSongEvent;
-import co.arcs.groove.basking.event.impl.DownloadSongsEvent;
-import co.arcs.groove.basking.event.impl.GeneratePlaylistsEvent;
-import co.arcs.groove.basking.event.impl.GetSongsToSyncEvent;
-import co.arcs.groove.basking.event.impl.SyncEvent;
-import co.arcs.groove.basking.event.impl.SyncEvent.FinishedWithError;
+import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanProgressChangedEvent;
+import co.arcs.groove.basking.event.impl.Events.BuildSyncPlanStartedEvent;
+import co.arcs.groove.basking.event.impl.Events.DeleteFilesFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.DeleteFilesStartedEvent;
+import co.arcs.groove.basking.event.impl.Events.DownloadSongFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.DownloadSongProgressChangedEvent;
+import co.arcs.groove.basking.event.impl.Events.DownloadSongsStartedEvent;
+import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsProgressChangedEvent;
+import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsStartedEvent;
+import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncProgressChangedEvent;
+import co.arcs.groove.basking.event.impl.Events.GetSongsToSyncStartedEvent;
+import co.arcs.groove.basking.event.impl.Events.SyncProcessFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.SyncProcessFinishedWithErrorEvent;
+import co.arcs.groove.basking.event.impl.Events.SyncProcessStartedEvent;
 import co.arcs.groove.thresher.GroovesharkException.InvalidCredentialsException;
 import co.arcs.groove.thresher.GroovesharkException.RateLimitedException;
 import co.arcs.groove.thresher.GroovesharkException.ServerErrorException;
@@ -44,13 +52,13 @@ public class ConsoleLogger {
     // Whole sync process
 
     @Subscribe
-    public void onEvent(SyncEvent.Started e) {
+    public void onEvent(SyncProcessStartedEvent e) {
         ansiPrintLogo();
         ansiPrintPrimaryLn("Starting sync…");
 
         // Print config, obfuscating password
         try {
-            Config config = new Config(e.task.config);
+            Config config = new Config(e.getConfig());
             if (config.password != null) {
                 config.password = "******";
             }
@@ -61,29 +69,29 @@ public class ConsoleLogger {
     }
 
     @Subscribe
-    public void onEvent(SyncEvent.Finished e) {
+    public void onEvent(SyncProcessFinishedEvent e) {
         String message;
-        if (e.outcome.failedToDownload == 0) {
+        if (e.getOutcome().getFailedToDownload() == 0) {
             message = "Sync finished successfully.";
         } else {
             message = String.format(Locale.US,
                     "Sync finished with errors: %d item(s) could not be downloaded.",
-                    e.outcome.failedToDownload);
+                    e.getOutcome().getFailedToDownload());
         }
         ansiPrintPrimaryLn(message);
     }
 
     @Subscribe
-    public void onEvent(FinishedWithError event) {
+    public void onEvent(SyncProcessFinishedWithErrorEvent event) {
         String message;
-        if (event.e.getCause() instanceof InvalidCredentialsException) {
+        if (event.getException().getCause() instanceof InvalidCredentialsException) {
             message = "Username/password combination is not valid.";
-        } else if (event.e instanceof ServerErrorException) {
+        } else if (event.getException() instanceof ServerErrorException) {
             message = "Server is not responding as expected. If this error persists, please file a bug at https://github.com/danhawkes/basking/issues.";
-        } else if (event.e instanceof RateLimitedException) {
+        } else if (event.getException() instanceof RateLimitedException) {
             message = "Your IP has been rate-limited! Please try again later.";
         } else {
-            message = event.e.toString();
+            message = event.getException().toString();
         }
         ansiPrintErrorLn(message);
     }
@@ -91,69 +99,69 @@ public class ConsoleLogger {
     // Query API for user information
 
     @Subscribe
-    public void onEvent(GetSongsToSyncEvent.Started e) {
+    public void onEvent(GetSongsToSyncStartedEvent e) {
         ansiPrintPrimaryLn("Retrieving user data…");
     }
 
     @Subscribe
-    public void onEvent(GetSongsToSyncEvent.ProgressChanged e) {
-        ansiPrintProgress(e.fraction);
+    public void onEvent(GetSongsToSyncProgressChangedEvent e) {
+        ansiPrintProgress(e.getFraction());
     }
 
     @Subscribe
-    public void onEvent(GetSongsToSyncEvent.Finished e) {
+    public void onEvent(GetSongsToSyncFinishedEvent e) {
         ansiPrintSecondaryLn("Found " + e.items + " items.");
     }
 
     // Build sync plan
 
     @Subscribe
-    public void onEvent(BuildSyncPlanEvent.Started e) {
+    public void onEvent(BuildSyncPlanStartedEvent e) {
         ansiPrintPrimaryLn("Building sync plan…");
     }
 
     @Subscribe
-    public void onEvent(BuildSyncPlanEvent.ProgressChanged e) {
-        ansiPrintProgress(e.fraction);
+    public void onEvent(BuildSyncPlanProgressChangedEvent e) {
+        ansiPrintProgress(e.getFraction());
     }
 
     @Subscribe
-    public void onEvent(BuildSyncPlanEvent.Finished e) {
+    public void onEvent(BuildSyncPlanFinishedEvent e) {
         ansiPrintSecondaryLn(String.format(Locale.US,
                 "Download %d, delete %d, and leave %d.",
-                e.download,
-                e.delete,
-                e.leave));
+                e.getDownload(),
+                e.getDelete(),
+                e.getLeave()));
     }
 
     // Delete files
 
     @Subscribe
-    public void onEvent(DeleteFilesEvent.Started e) {
+    public void onEvent(DeleteFilesStartedEvent e) {
         ansiPrintPrimaryLn("Deleting files…");
         ansiPrintProgress(0.0f);
     }
 
     @Subscribe
-    public void onEvent(DeleteFilesEvent.Finished e) {
+    public void onEvent(DeleteFilesFinishedEvent e) {
         ansiPrintProgress(1.0f);
     }
 
     // Download song
 
     @Subscribe
-    public void onEvent(DownloadSongsEvent.Started e) {
+    public void onEvent(DownloadSongsStartedEvent e) {
         ansiPrintPrimaryLn("Downloading songs…");
     }
 
     @Subscribe
-    public void onEvent(DownloadSongEvent.ProgressChanged e) {
-        ansiPrintProgress(e.fraction);
-        out.print(ansi().a(" ").a(e.task.song.getArtistName() + " - " + e.task.song.getName()));
+    public void onEvent(DownloadSongProgressChangedEvent e) {
+        ansiPrintProgress(e.getFraction());
+        out.print(ansi().a(" ").a(e.getSong().getArtistName() + " - " + e.getSong().getName()));
     }
 
     @Subscribe
-    public void onEvent(DownloadSongEvent.Finished e) {
+    public void onEvent(DownloadSongFinishedEvent e) {
         out.print(ansi().newline());
         needNewline = false;
     }
@@ -161,13 +169,13 @@ public class ConsoleLogger {
     // Generate playlist
 
     @Subscribe
-    public void onEvent(GeneratePlaylistsEvent.Started e) {
+    public void onEvent(GeneratePlaylistsStartedEvent e) {
         ansiPrintPrimaryLn("Generating playlists…");
     }
 
     @Subscribe
-    public void onEvent(GeneratePlaylistsEvent.ProgressChanged e) {
-        ansiPrintProgress(e.fraction);
+    public void onEvent(GeneratePlaylistsProgressChangedEvent e) {
+        ansiPrintProgress(e.getFraction());
     }
 
     // Printers

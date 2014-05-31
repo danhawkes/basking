@@ -17,7 +17,9 @@ import java.util.concurrent.Semaphore;
 
 import co.arcs.groove.basking.SyncService;
 import co.arcs.groove.basking.Utils;
-import co.arcs.groove.basking.event.impl.DownloadSongEvent;
+import co.arcs.groove.basking.event.impl.Events.DownloadSongFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.DownloadSongProgressChangedEvent;
+import co.arcs.groove.basking.event.impl.Events.DownloadSongStartedEvent;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.Song;
 
@@ -25,7 +27,7 @@ public class DownloadSongTask implements Task<Song> {
 
     private final EventBus bus;
     private final Client client;
-    public final Song song;
+    private final Song song;
     private final File syncFile;
     private final File tempPath;
     private final Semaphore concurrentJobsSemaphore;
@@ -52,7 +54,7 @@ public class DownloadSongTask implements Task<Song> {
         concurrentJobsSemaphore.acquire();
 
         try {
-            bus.post(new DownloadSongEvent.Started(this));
+            bus.post(new DownloadSongStartedEvent(this, song));
 
             File tempFile = new File(tempPath,
                     syncFile.getName() + SyncService.TEMP_FILE_EXTENSION_1);
@@ -67,7 +69,7 @@ public class DownloadSongTask implements Task<Song> {
                 is = new BufferedInputStream(response.getEntity().getContent(), INPUT_BUFFER_LEN);
                 os = new FileOutputStream(tempFile);
 
-                bus.post(new DownloadSongEvent.ProgressChanged(this, 0, 1));
+                bus.post(new DownloadSongProgressChangedEvent(this, song, 0, 1));
 
                 byte[] buffer = new byte[INPUT_BUFFER_LEN];
 
@@ -83,7 +85,10 @@ public class DownloadSongTask implements Task<Song> {
                     // Only emit events for >1% change
                     float newProgress = (float) readTotal / len;
                     if (((newProgress - 0.01f) >= lastReportedProgress) || newProgress == 1.0f) {
-                        bus.post(new DownloadSongEvent.ProgressChanged(this, readTotal, (int) len));
+                        bus.post(new DownloadSongProgressChangedEvent(this,
+                                song,
+                                readTotal,
+                                (int) len));
                         lastReportedProgress = newProgress;
                     }
                 }
@@ -146,7 +151,7 @@ public class DownloadSongTask implements Task<Song> {
                 throw new IOException("Failed to move temp file: " + tempFile2.getAbsolutePath());
             }
 
-            bus.post(new DownloadSongEvent.Finished(this));
+            bus.post(new DownloadSongFinishedEvent(this, song));
         } finally {
             concurrentJobsSemaphore.release();
         }

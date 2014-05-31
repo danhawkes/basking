@@ -17,7 +17,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import co.arcs.groove.basking.event.impl.GeneratePlaylistsEvent;
+import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsProgressChangedEvent;
+import co.arcs.groove.basking.event.impl.Events.GeneratePlaylistsStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
@@ -43,7 +45,7 @@ public class GeneratePlaylistsTask implements Task<Void> {
     @Override
     public Void call() throws Exception {
 
-        bus.post(new GeneratePlaylistsEvent.Started(this));
+        bus.post(new GeneratePlaylistsStartedEvent(this));
 
         List<SyncPlan.Item> collectionItems = Lists.newArrayList();
         List<SyncPlan.Item> favoriteItems = Lists.newArrayList();
@@ -86,7 +88,7 @@ public class GeneratePlaylistsTask implements Task<Void> {
         });
 
         int totalItems = favoriteItems.size() + collectionItems.size();
-        bus.post(new GeneratePlaylistsEvent.ProgressChanged(this, 0, totalItems));
+        bus.post(new GeneratePlaylistsProgressChangedEvent(this, 0, totalItems));
 
         writePlaylist(new File(syncPath, "GS Favorites.m3u"), favoriteItems, 0, totalItems);
         writePlaylist(new File(syncPath, "GS Collection.m3u"),
@@ -94,7 +96,7 @@ public class GeneratePlaylistsTask implements Task<Void> {
                 favoriteItems.size(),
                 totalItems);
 
-        bus.post(new GeneratePlaylistsEvent.Finished(this));
+        bus.post(new GeneratePlaylistsFinishedEvent(this));
 
         return null;
     }
@@ -112,7 +114,7 @@ public class GeneratePlaylistsTask implements Task<Void> {
 
         for (SyncPlan.Item item : items) {
             writeToPlaylist(sb, item);
-            bus.post(new GeneratePlaylistsEvent.ProgressChanged(this, ++i, totalItems));
+            bus.post(new GeneratePlaylistsProgressChangedEvent(this, ++i, totalItems));
         }
 
         Files.write(sb.toString(), playlistFile, Charsets.UTF_8);

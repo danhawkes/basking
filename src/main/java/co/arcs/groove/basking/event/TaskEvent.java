@@ -1,41 +1,61 @@
 package co.arcs.groove.basking.event;
 
-import co.arcs.groove.basking.task.Task;
+/**
+ * Event that's associated with a {@link co.arcs.groove.basking.task.Task}.
+ *
+ * @param <T>
+ *         The task's type.
+ */
+public abstract class TaskEvent<T> {
 
-public abstract class TaskEvent<T extends Task<?>> {
-
-    public final T task;
+    private final T task;
 
     public TaskEvent(T task) {
         this.task = task;
     }
 
-    public abstract static class Started<T extends Task<?>> extends TaskEvent<T> {
+    public T getTask() {
+        return task;
+    }
 
-        public Started(T task) {
+    public abstract static class TaskStartedEvent<T> extends TaskEvent<T> {
+
+        public TaskStartedEvent(T task) {
             super(task);
         }
     }
 
-    public abstract static class ProgressChanged<T extends Task<?>> extends TaskEvent<T> {
+    public abstract static class TaskProgressChangedEvent<T> extends TaskEvent<T> {
 
-        public final int progress;
-        public final int total;
-        public final float fraction;
-        public final float percentage;
+        private final int progress;
+        private final int total;
 
-        public ProgressChanged(T task, int progress, int total) {
+        public TaskProgressChangedEvent(T task, int progress, int total) {
             super(task);
             this.progress = progress;
             this.total = total;
-            this.fraction = ((float) progress / total);
-            this.percentage = fraction * 100.0f;
+        }
+
+        public int getProgress() {
+            return progress;
+        }
+
+        public int getTotal() {
+            return total;
+        }
+
+        public float getFraction() {
+            return (float) progress / total;
+        }
+
+        public float getPercentage() {
+            return getFraction() * 100.0f;
         }
     }
 
-    public abstract static class Finished<T extends Task<?>> extends TaskEvent<T> {
+    public abstract static class TaskFinishedEvent<T> extends TaskEvent<T> {
 
-        public Finished(T task) {
+        public TaskFinishedEvent(T task) {
             super(task);
         }
     }

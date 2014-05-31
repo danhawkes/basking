@@ -9,7 +9,8 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.File;
 import java.util.List;
 
-import co.arcs.groove.basking.event.impl.DeleteFilesEvent;
+import co.arcs.groove.basking.event.impl.Events.DeleteFilesFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.DeleteFilesStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 
@@ -28,7 +29,7 @@ public class DeleteFilesTask implements Task<List<File>> {
     @Override
     public List<File> call() throws Exception {
 
-        bus.post(new DeleteFilesEvent.Started(this));
+        bus.post(new DeleteFilesStartedEvent(this));
 
         List<ListenableFuture<File>> deleteFutures = Lists.newArrayList();
         for (Item item : items) {
@@ -36,7 +37,7 @@ public class DeleteFilesTask implements Task<List<File>> {
         }
         List<File> result = Futures.allAsList(deleteFutures).get();
 
-        bus.post(new DeleteFilesEvent.Finished(this));
+        bus.post(new DeleteFilesFinishedEvent(this));
 
         return result;
     }

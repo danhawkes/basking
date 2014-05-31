@@ -16,7 +16,9 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import co.arcs.groove.basking.Config;
-import co.arcs.groove.basking.event.impl.SyncEvent;
+import co.arcs.groove.basking.event.impl.Events.SyncProcessFinishedEvent;
+import co.arcs.groove.basking.event.impl.Events.SyncProcessFinishedWithErrorEvent;
+import co.arcs.groove.basking.event.impl.Events.SyncProcessStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
 import co.arcs.groove.thresher.Client;
@@ -26,18 +28,30 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
     public static class Outcome {
 
-        public final int deleted;
-        public final int downloaded;
-        public final int failedToDownload;
+        private final int deleted;
+        private final int downloaded;
+        private final int failedToDownload;
 
         public Outcome(int deleted, int downloaded, int failedToDownload) {
             this.deleted = deleted;
             this.downloaded = downloaded;
             this.failedToDownload = failedToDownload;
         }
+
+        public int getDeleted() {
+            return deleted;
+        }
+
+        public int getDownloaded() {
+            return downloaded;
+        }
+
+        public int getFailedToDownload() {
+            return failedToDownload;
+        }
     }
 
-    public final Config config;
+    private final Config config;
     private final EventBus bus;
     private final ListeningExecutorService exec;
     private final File tempPath;
@@ -61,7 +75,7 @@ public class SyncTask implements Task<SyncTask.Outcome> {
     @Override
     public Outcome call() throws Exception {
 
-        bus.post(new SyncEvent.Started(this));
+        bus.post(new SyncProcessStartedEvent(this, config));
 
         try {
 
@@ -237,10 +251,10 @@ public class SyncTask implements Task<SyncTask.Outcome> {
             );
 
             Outcome outcome = outcomeFuture.get();
-            bus.post(new SyncEvent.Finished(this, outcome));
+            bus.post(new SyncProcessFinishedEvent(this, config, outcome));
             return outcome;
         } catch (Exception e) {
-            bus.post(new SyncEvent.FinishedWithError(this, e));
+            bus.post(new SyncProcessFinishedWithErrorEvent(this, config, e));
             throw e;
         }
     }
