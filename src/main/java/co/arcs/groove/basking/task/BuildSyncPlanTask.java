@@ -222,6 +222,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
             is.close();
 
             int progress = 0;
+            bus.post(new BuildSyncPlanProgressChangedEvent(this, 0, songs.size()));
 
             for (Song song : songs) {
                 if (cacheMap.containsKey(song.getId())) {
@@ -236,7 +237,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
                             Action.DOWNLOAD,
                             song));
                 }
-                bus.post(new BuildSyncPlanProgressChangedEvent(this, progress++, songs.size()));
+                bus.post(new BuildSyncPlanProgressChangedEvent(this, ++progress, songs.size()));
             }
 
             // Unwanted stuff that's in the cache should be removed
