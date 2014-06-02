@@ -18,6 +18,7 @@ import java.util.concurrent.Semaphore;
 import co.arcs.groove.basking.Config;
 import co.arcs.groove.basking.event.Events.SyncProcessFinishedEvent;
 import co.arcs.groove.basking.event.Events.SyncProcessFinishedWithErrorEvent;
+import co.arcs.groove.basking.event.Events.SyncProcessProgressChangedEvent;
 import co.arcs.groove.basking.event.Events.SyncProcessStartedEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
@@ -57,6 +58,7 @@ public class SyncTask implements Task<SyncTask.Outcome> {
     private final File tempPath;
     private final Client client;
     private final Semaphore concurrentJobsSemaphore;
+    private static final int NUM_STEPS = 6;
 
     public SyncTask(EventBus bus, ListeningExecutorService exec, Config config) {
         this.bus = bus;
@@ -74,6 +76,8 @@ public class SyncTask implements Task<SyncTask.Outcome> {
         bus.post(new SyncProcessStartedEvent(this, config));
 
         try {
+
+            postProgressEvent(0);
 
             // Ensure sync and temp directories exist
             ListenableFuture<Void> createdRequiredDirectoriesFuture = (ListenableFuture<Void>) ((config.dryRun) ? Futures
@@ -103,6 +107,7 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
                         @Override
                         public ListenableFuture<Set<Song>> apply(Void input) throws Exception {
+                            postProgressEvent(1);
                             return exec.submit(new GetSongsToSyncTask(bus,
                                     client,
                                     config.username,
@@ -118,20 +123,21 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
                         @Override
                         public ListenableFuture<SyncPlan> apply(Set<Song> songs) throws Exception {
+                            postProgressEvent(2);
                             return exec.submit(new BuildSyncPlanTask(bus, config.syncDir, songs));
                         }
                     }
             );
 
             // Schedule delete files task. (This needs to happen before
-            // downloads as
-            // the files may overlap)
+            // downloads as the files may overlap)
             final ListenableFuture<List<File>> deleteSongsFuture = Futures.transform(
                     buildSyncPlanFuture,
                     new AsyncFunction<SyncPlan, List<File>>() {
 
                         @Override
                         public ListenableFuture<List<File>> apply(SyncPlan syncPlan) throws Exception {
+                            postProgressEvent(3);
                             List<SyncPlan.Item> deletePlanItems = Lists.newArrayList();
                             for (SyncPlan.Item item : syncPlan.getItems()) {
                                 if (item.getAction() == Action.DELETE) {
@@ -155,6 +161,7 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
                         @Override
                         public ListenableFuture<List<Song>> apply(List<Object> input) throws Exception {
+                            postProgressEvent(4);
                             SyncPlan syncPlan = (SyncPlan) input.get(0);
                             List<SyncPlan.Item> downloadPlanItems = Lists.newArrayList();
                             for (SyncPlan.Item item : syncPlan.getItems()) {
@@ -184,6 +191,7 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
                         @Override
                         public ListenableFuture<Void> apply(List<Object> input) throws Exception {
+                            postProgressEvent(5);
                             if (config.dryRun) {
                                 return Futures.immediateFuture(null);
                             } else {
@@ -231,7 +239,7 @@ public class SyncTask implements Task<SyncTask.Outcome> {
 
                         @Override
                         public Outcome apply(List<Object> input) {
-
+                            postProgressEvent(6);
                             List<File> deletedFiles = (List<File>) input.get(0);
                             List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(1));
 
@@ -253,5 +261,9 @@ public class SyncTask implements Task<SyncTask.Outcome> {
             bus.post(new SyncProcessFinishedWithErrorEvent(this, config, e));
             throw e;
         }
+    }
+
+    private void postProgressEvent(int step) {
+        bus.post(new SyncProcessProgressChangedEvent(SyncTask.this, config, step, NUM_STEPS));
     }
 }
