@@ -1,10 +1,8 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>co.arcs.groove</groupId>
     <artifactId>basking</artifactId>
-    <version>1.7.1-SNAPSHOT</version>
+    <version>1.7.1</version>
     <packaging>jar</packaging>
     <name>basking</name>
     <description>Java + command-line tool for synchronising Grooveshark libraries.</description>
@@ -21,7 +19,8 @@
     <scm>
         <url>https://github.com/danhawkes/basking</url>
         <developerConnection>scm:git:git@github.com:danhawkes/basking.git</developerConnection>
-    </scm>
+      <tag>v1.7.1</tag>
+  </scm>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
