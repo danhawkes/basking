@@ -4,27 +4,30 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>co.arcs.groove</groupId>
     <artifactId>basking</artifactId>
-    <version>1.7.0</version>
+    <version>1.7.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>basking</name>
+    <description>Java + command-line tool for synchronising Grooveshark libraries.</description>
+    <url>https://github.com/danhawkes/basking</url>
+    <developers>
+        <developer>
+            <name>Daniel Hawkes</name>
+            <email>dan@arcs.co</email>
+        </developer>
+    </developers>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>mashape-releases</id>
-            <url>http://maven.mashape.com/releases</url>
-        </repository>
-        <repository>
-            <id>arcs.co-external</id>
-            <url>https://arcs.co/archiva/repository/external/</url>
-        </repository>
-        <repository>
-            <id>arcs.co-snapshots</id>
-            <url>https://arcs.co/archiva/repository/snapshots/</url>
-        </repository>
-    </repositories>
+    <scm>
+        <url>https://github.com/danhawkes/basking</url>
+        <developerConnection>scm:git:git@github.com:danhawkes/basking.git</developerConnection>
+    </scm>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <dependencies>
         <dependency>
@@ -62,7 +65,7 @@
         <dependency>
             <groupId>co.arcs.groove</groupId>
             <artifactId>thresher</artifactId>
-            <version>1.2.0</version>
+            <version>1.2.1</version>
         </dependency>
         <dependency>
             <groupId>com.mpatric</groupId>
@@ -83,15 +86,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-eclipse-plugin</artifactId>
-                <version>2.9</version>
-                <configuration>
-                    <downloadSources>true</downloadSources>
-                    <downloadJavadocs>true</downloadJavadocs>
-                </configuration>
-            </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
@@ -161,17 +155,47 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
     <distributionManagement>
-        <repository>
-            <id>arcs.co-external</id>
-            <url>https://arcs.co/archiva/repository/external/</url>
-        </repository>
         <snapshotRepository>
-            <id>arcs.co-snapshots</id>
-            <url>https://arcs.co/archiva/repository/snapshots/</url>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
     </distributionManagement>
 </project>
