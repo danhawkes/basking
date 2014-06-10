@@ -18,32 +18,29 @@ Sync a Grooveshark library to disk.
 
 ### Java
 
-Add the following maven repository and dependency to your POM:
+With Maven:
 
 ```xml
-<repositories>
-	<repository>
-		<id>arcs.co</id>
-		<url>http://arcs.co/archiva/repository/external</url>
-	</repository>
-</repositories>
-
-<dependencies>
-	<dependency>
-		<groupId>co.arcs.groove</groupId>
-		<artifactId>basking</artifactId>
-		<version>1.5.3</version>
-	</dependency>
-</dependencies>
+<dependency>
+	<groupId>co.arcs.groove</groupId>
+	<artifactId>basking</artifactId>
+	<version>X.X.X</version>
+</dependency>
 ```
 
-Alternatively, download the latest standalone Jar [here](https://arcs.co/archiva/#artifact/co.arcs.groove/basking).
+Or Gradle:
+
+```groovy
+compile 'co.arcs.groove:basking:X.X.X'
+```
+
+Find the latest version on [maven central](http://search.maven.org/#search|ga|1|g%3A%22co.arcs.groove%22%20AND%20a%3A%22basking%22).
 
 ### Command line
 
-Get the distribution package [here](https://arcs.co/archiva/#artifact/co.arcs.groove/basking). 
+Get the [distribution package](http://search.maven.org/#search|ga|1|g%3A%22co.arcs.groove%22%20AND%20a%3A%22basking%22).
 
-The jar-with-dependencies and wrapper script need adding to the path. On linux that would look something like this:
+The jar-with-dependencies and wrapper script need adding to the path. On linux or OSX that would look something like this:
 
 ```bash
 unzip basking-1.5.3-dist.zip
