@@ -34,16 +34,25 @@ public class DownloadSongTask implements Task<Song> {
 
     private static final int INPUT_BUFFER_LEN = 1024 * 64;
 
+    /**
+     * @param targetFile
+     *         The file in which to store the downloaded song.
+     * @param tempPath
+     *         A directory in which the task can create temporary files.
+     * @param concurrentJobsSemaphore
+     *         A semaphore the task will acquire and hold while downloading the song. This is used
+     *         to control the number of concurrently running download tasks.
+     */
     public DownloadSongTask(EventBus bus,
             Client client,
             Song song,
-            File syncFile,
+            File targetFile,
             File tempPath,
             Semaphore concurrentJobsSemaphore) {
         this.bus = bus;
         this.client = client;
         this.song = song;
-        this.syncFile = syncFile;
+        this.syncFile = targetFile;
         this.tempPath = tempPath;
         this.concurrentJobsSemaphore = concurrentJobsSemaphore;
     }
@@ -90,6 +99,11 @@ public class DownloadSongTask implements Task<Song> {
                                 readTotal,
                                 (int) len));
                         lastReportedProgress = newProgress;
+                    }
+
+                    // Bail out if the thread was interrupted inside this loop
+                    if (Thread.currentThread().isInterrupted()) {
+                        throw new InterruptedException();
                     }
                 }
                 os.flush();
