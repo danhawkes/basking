@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>co.arcs.groove</groupId>
     <artifactId>basking</artifactId>
-    <version>1.7.2-SNAPSHOT</version>
+    <version>1.7.2</version>
     <packaging>jar</packaging>
     <name>basking</name>
     <description>Java + command-line tool for synchronising Grooveshark libraries.</description>
@@ -19,7 +19,7 @@
     <scm>
         <url>https://github.com/danhawkes/basking</url>
         <developerConnection>scm:git:git@github.com:danhawkes/basking.git</developerConnection>
-      <tag>HEAD</tag>
+      <tag>v1.7.2</tag>
   </scm>
     <licenses>
         <license>
