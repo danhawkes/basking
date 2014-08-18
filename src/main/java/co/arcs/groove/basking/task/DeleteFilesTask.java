@@ -1,7 +1,6 @@
 package co.arcs.groove.basking.task;
 
 import com.beust.jcommander.internal.Lists;
-import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -16,11 +15,11 @@ import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item;
 
 public class DeleteFilesTask implements Task<List<File>> {
 
-    private final EventBus bus;
+    private final EventPoster bus;
     private final List<SyncPlan.Item> items;
     private final ListeningExecutorService executor;
 
-    public DeleteFilesTask(EventBus bus, ListeningExecutorService executor, List<Item> items) {
+    public DeleteFilesTask(EventPoster bus, ListeningExecutorService executor, List<Item> items) {
         this.bus = bus;
         this.items = items;
         this.executor = executor;

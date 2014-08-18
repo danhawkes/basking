@@ -2,7 +2,6 @@ package co.arcs.groove.basking.test;
 
 import com.belladati.httpclientandroidlib.HttpEntity;
 import com.belladati.httpclientandroidlib.HttpResponse;
-import com.google.common.eventbus.EventBus;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -19,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import co.arcs.groove.basking.task.DownloadSongTask;
+import co.arcs.groove.basking.task.EventPoster;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.GroovesharkException;
 import co.arcs.groove.thresher.Song;
@@ -74,7 +74,7 @@ public class DownloadSongTaskTest {
         Client client = mock(Client.class);
         when(client.getStreamResponse((Song) anyObject())).thenReturn(response);
 
-        final DownloadSongTask task = new DownloadSongTask(new EventBus(),
+        final DownloadSongTask task = new DownloadSongTask(mock(EventPoster.class),
                 client,
                 mock(Song.class),
                 targetFile,

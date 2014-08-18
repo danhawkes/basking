@@ -1,7 +1,5 @@
 package co.arcs.groove.basking.task;
 
-import com.google.common.eventbus.EventBus;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -10,10 +8,10 @@ import co.arcs.groove.basking.event.Events.DeleteFileStartedEvent;
 
 public class DeleteFileTask implements Task<File> {
 
-    private final EventBus bus;
+    private final EventPoster bus;
     private final File file;
 
-    public DeleteFileTask(EventBus bus, File file) {
+    public DeleteFileTask(EventPoster bus, File file) {
         this.bus = bus;
         this.file = file;
     }

@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 
-import co.arcs.groove.basking.SyncService;
+import co.arcs.groove.basking.SyncOperation;
 
 public class DeleteTemporariesTask implements Task<Void> {
 
@@ -21,7 +21,8 @@ public class DeleteTemporariesTask implements Task<Void> {
 
             @Override
             public boolean accept(File arg0, String arg1) {
-                return arg1.endsWith(SyncService.TEMP_FILE_EXTENSION_1) || arg1.endsWith(SyncService.TEMP_FILE_EXTENSION_2);
+                return arg1.endsWith(SyncOperation.TEMP_FILE_EXTENSION_1) || arg1.endsWith(
+                        SyncOperation.TEMP_FILE_EXTENSION_2);
             }
         });
         for (File f : tempFiles) {

@@ -4,7 +4,6 @@ import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.UnsupportedTagException;
@@ -26,12 +25,12 @@ import co.arcs.groove.thresher.Song;
 
 public class GeneratePlaylistsTask implements Task<Void> {
 
-    private final EventBus bus;
+    private final EventPoster bus;
     private final File syncPath;
     private final SyncPlan syncPlan;
     private final List<Song> downloadedSongs;
 
-    public GeneratePlaylistsTask(EventBus bus,
+    public GeneratePlaylistsTask(EventPoster bus,
             File syncPath,
             SyncPlan syncPlan,
             List<Song> downloadedSongs) {

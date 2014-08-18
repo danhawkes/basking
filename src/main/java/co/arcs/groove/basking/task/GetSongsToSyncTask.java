@@ -3,7 +3,6 @@ package co.arcs.groove.basking.task;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
-import com.google.common.eventbus.EventBus;
 
 import java.util.Set;
 
@@ -16,12 +15,12 @@ import co.arcs.groove.thresher.User;
 
 public class GetSongsToSyncTask implements Task<Set<Song>> {
 
-    private final EventBus bus;
+    private final EventPoster bus;
     private final Client client;
     private final String username;
     private final String password;
 
-    public GetSongsToSyncTask(EventBus bus, Client client, String username, String password) {
+    public GetSongsToSyncTask(EventPoster bus, Client client, String username, String password) {
         this.bus = bus;
         this.client = client;
         this.username = username;

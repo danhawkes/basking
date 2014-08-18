@@ -6,7 +6,6 @@ import com.beust.jcommander.internal.Lists;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,8 +60,8 @@ public class Cli {
 
         // Attempt to read parameters from the config file
         int configFileParamIndex;
-        if (((configFileParamIndex = args.indexOf(Config.CONFIG_ARG_SHORT)) >= 0) || ((configFileParamIndex = args
-                .indexOf(Config.CONFIG_ARG_LONG)) >= 0)) {
+        if (((configFileParamIndex = args.indexOf(Config.CONFIG_ARG_SHORT)) >= 0) ||
+                ((configFileParamIndex = args.indexOf(Config.CONFIG_ARG_LONG)) >= 0)) {
             if (args.size() > configFileParamIndex) {
                 // There's a valid config file parameter
                 String configFileParamKey = args.get(configFileParamIndex);
@@ -77,7 +76,8 @@ public class Cli {
                     args.addAll(configFileParams);
                 } catch (IOException e) {
                     exit1(jc,
-                            new ParameterException("Could not read file '" + configFileParamValue + "'."));
+                            new ParameterException(
+                                    "Could not read file '" + configFileParamValue + "'."));
                     return;
                 }
             }
@@ -131,15 +131,13 @@ public class Cli {
             Logger rootLogger = Logger.getLogger("");
             rootLogger.removeHandler(rootLogger.getHandlers()[0]);
 
-            SyncService syncService = new SyncService();
+            SyncOperation syncOperation = new SyncOperation(config);
 
             ConsoleLogger consoleLogger = new ConsoleLogger();
-            syncService.getEventBus().register(consoleLogger);
-
-            ListenableFuture<Outcome> serviceOutcome = syncService.start(config);
+            syncOperation.getEventBus().register(consoleLogger);
 
             try {
-                Outcome outcome = serviceOutcome.get();
+                Outcome outcome = syncOperation.start().getFuture().get();
                 if (outcome.getFailedToDownload() > 0) {
                     System.exit(1);
                 }

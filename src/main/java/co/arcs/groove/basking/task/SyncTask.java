@@ -2,7 +2,6 @@ package co.arcs.groove.basking.task;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -20,10 +19,13 @@ import co.arcs.groove.basking.event.Events.SyncProcessFinishedEvent;
 import co.arcs.groove.basking.event.Events.SyncProcessFinishedWithErrorEvent;
 import co.arcs.groove.basking.event.Events.SyncProcessProgressChangedEvent;
 import co.arcs.groove.basking.event.Events.SyncProcessStartedEvent;
+import co.arcs.groove.basking.event.TaskEvent;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan.Item.Action;
 import co.arcs.groove.thresher.Client;
 import co.arcs.groove.thresher.Song;
+import rx.Observable;
+import rx.subjects.PublishSubject;
 
 public class SyncTask implements Task<SyncTask.Outcome> {
 
@@ -52,28 +54,32 @@ public class SyncTask implements Task<SyncTask.Outcome> {
         }
     }
 
+
+
+    private static final int NUM_STEPS = 6;
+
     private final Config config;
-    private final EventBus bus;
     private final ListeningExecutorService exec;
     private final File tempPath;
     private final Client client;
     private final Semaphore concurrentJobsSemaphore;
-    private static final int NUM_STEPS = 6;
+    private final PublishSubject<TaskEvent> subject = PublishSubject.create();
+    private final EventPoster poster;
 
-    public SyncTask(EventBus bus, ListeningExecutorService exec, Config config) {
-        this.bus = bus;
+    public SyncTask(final EventPoster eventPoster, ListeningExecutorService exec, Config config) {
         this.exec = exec;
         this.config = config;
         this.tempPath = new File(config.syncDir, ".gssync");
         this.client = new Client();
         this.concurrentJobsSemaphore = new Semaphore(config.numConcurrent);
+        this.poster = eventPoster;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public Outcome call() throws Exception {
 
-        bus.post(new SyncProcessStartedEvent(this, config));
+        poster.post(new SyncProcessStartedEvent(this, config));
 
         try {
 
@@ -97,8 +103,7 @@ public class SyncTask implements Task<SyncTask.Outcome> {
                                 return exec.submit(new DeleteTemporariesTask(tempPath));
                             }
                         }
-                    }
-            );
+                    });
 
             // Obtain the user's library/favorites from the API
             ListenableFuture<Set<Song>> getSongsToSyncFuture = Futures.transform(
@@ -108,13 +113,12 @@ public class SyncTask implements Task<SyncTask.Outcome> {
                         @Override
                         public ListenableFuture<Set<Song>> apply(Void input) throws Exception {
                             postProgressEvent(1);
-                            return exec.submit(new GetSongsToSyncTask(bus,
+                            return exec.submit(new GetSongsToSyncTask(poster,
                                     client,
                                     config.username,
                                     config.password));
                         }
-                    }
-            );
+                    });
 
             // Build a plan of what to do
             final ListenableFuture<SyncPlan> buildSyncPlanFuture = Futures.transform(
@@ -124,10 +128,11 @@ public class SyncTask implements Task<SyncTask.Outcome> {
                         @Override
                         public ListenableFuture<SyncPlan> apply(Set<Song> songs) throws Exception {
                             postProgressEvent(2);
-                            return exec.submit(new BuildSyncPlanTask(bus, config.syncDir, songs));
+                            return exec.submit(new BuildSyncPlanTask(poster,
+                                    config.syncDir,
+                                    songs));
                         }
-                    }
-            );
+                    });
 
             // Schedule delete files task. (This needs to happen before
             // downloads as the files may overlap)
@@ -148,122 +153,128 @@ public class SyncTask implements Task<SyncTask.Outcome> {
                             if (deletePlanItems.size() == 0 || config.dryRun) {
                                 return Futures.immediateFuture((List<File>) new ArrayList<File>());
                             } else {
-                                return exec.submit(new DeleteFilesTask(bus, exec, deletePlanItems));
+                                return exec.submit(new DeleteFilesTask(poster,
+                                        exec,
+                                        deletePlanItems));
                             }
                         }
-                    }
-            );
+                    });
 
             // Schedule download songs task
             final ListenableFuture<List<Song>> downloadSongsFuture = Futures.transform(Futures.allAsList(
-                            buildSyncPlanFuture,
-                            deleteSongsFuture), new AsyncFunction<List<Object>, List<Song>>() {
+                    buildSyncPlanFuture,
+                    deleteSongsFuture), new AsyncFunction<List<Object>, List<Song>>() {
 
-                        @Override
-                        public ListenableFuture<List<Song>> apply(List<Object> input) throws Exception {
-                            postProgressEvent(4);
-                            SyncPlan syncPlan = (SyncPlan) input.get(0);
-                            List<SyncPlan.Item> downloadPlanItems = Lists.newArrayList();
-                            for (SyncPlan.Item item : syncPlan.getItems()) {
-                                if (item.getAction() == Action.DOWNLOAD) {
-                                    downloadPlanItems.add(item);
-                                }
-                            }
-
-                            if (downloadPlanItems.size() == 0 || config.dryRun) {
-                                return Futures.immediateFuture((List<Song>) new ArrayList<Song>());
-                            } else {
-                                return exec.submit(new DownloadSongsTask(bus,
-                                        client,
-                                        exec,
-                                        tempPath,
-                                        concurrentJobsSemaphore,
-                                        downloadPlanItems));
-                            }
+                @Override
+                public ListenableFuture<List<Song>> apply(List<Object> input) throws Exception {
+                    postProgressEvent(4);
+                    SyncPlan syncPlan = (SyncPlan) input.get(0);
+                    List<SyncPlan.Item> downloadPlanItems = Lists.newArrayList();
+                    for (SyncPlan.Item item : syncPlan.getItems()) {
+                        if (item.getAction() == Action.DOWNLOAD) {
+                            downloadPlanItems.add(item);
                         }
                     }
-            );
+
+                    if (downloadPlanItems.size() == 0 || config.dryRun) {
+                        return Futures.immediateFuture((List<Song>) new ArrayList<Song>());
+                    } else {
+                        return exec.submit(new DownloadSongsTask(poster,
+                                client,
+                                exec,
+                                tempPath,
+                                concurrentJobsSemaphore,
+                                downloadPlanItems));
+                    }
+                }
+            });
 
             // Schedule write playlists task
             final ListenableFuture<Void> generatePlaylistsFuture = Futures.transform(Futures.allAsList(
-                            buildSyncPlanFuture,
-                            downloadSongsFuture), new AsyncFunction<List<Object>, Void>() {
+                    buildSyncPlanFuture,
+                    downloadSongsFuture), new AsyncFunction<List<Object>, Void>() {
 
-                        @Override
-                        public ListenableFuture<Void> apply(List<Object> input) throws Exception {
-                            postProgressEvent(5);
-                            if (config.dryRun) {
-                                return Futures.immediateFuture(null);
-                            } else {
-                                SyncPlan syncPlan = (SyncPlan) input.get(0);
-                                List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(
-                                        1));
+                @Override
+                public ListenableFuture<Void> apply(List<Object> input) throws Exception {
+                    postProgressEvent(5);
+                    if (config.dryRun) {
+                        return Futures.immediateFuture(null);
+                    } else {
+                        SyncPlan syncPlan = (SyncPlan) input.get(0);
+                        List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(1));
 
-                                return exec.submit(new GeneratePlaylistsTask(bus,
-                                        config.syncDir,
-                                        syncPlan,
-                                        downloadedSongs));
-                            }
-                        }
+                        return exec.submit(new GeneratePlaylistsTask(poster,
+                                config.syncDir,
+                                syncPlan,
+                                downloadedSongs));
                     }
-            );
+                }
+            });
 
             // Schedule write cache file task
             final ListenableFuture<Integer> writeCacheFileFuture = Futures.transform(Futures.allAsList(
-                            buildSyncPlanFuture,
-                            downloadSongsFuture), new AsyncFunction<List<Object>, Integer>() {
-                        @Override
-                        public ListenableFuture<Integer> apply(List<Object> input) throws Exception {
+                    buildSyncPlanFuture,
+                    downloadSongsFuture), new AsyncFunction<List<Object>, Integer>() {
+                @Override
+                public ListenableFuture<Integer> apply(List<Object> input) throws Exception {
 
-                            if (config.dryRun) {
-                                return Futures.immediateFuture(null);
-                            } else {
-                                SyncPlan syncPlan = (SyncPlan) input.get(0);
-                                List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(
-                                        1));
+                    if (config.dryRun) {
+                        return Futures.immediateFuture(null);
+                    } else {
+                        SyncPlan syncPlan = (SyncPlan) input.get(0);
+                        List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(1));
 
-                                return exec.submit(new WriteCacheFileTask(config.syncDir,
-                                        syncPlan,
-                                        downloadedSongs));
-                            }
-                        }
+                        return exec.submit(new WriteCacheFileTask(config.syncDir,
+                                syncPlan,
+                                downloadedSongs));
                     }
-            );
+                }
+            });
 
             // Aggregate tasks to report metrics
             ListenableFuture<Outcome> outcomeFuture = Futures.transform(Futures.allAsList(
-                            deleteSongsFuture,
-                            downloadSongsFuture,
-                            generatePlaylistsFuture,
-                            writeCacheFileFuture), new Function<List<Object>, Outcome>() {
+                    deleteSongsFuture,
+                    downloadSongsFuture,
+                    generatePlaylistsFuture,
+                    writeCacheFileFuture), new Function<List<Object>, Outcome>() {
 
-                        @Override
-                        public Outcome apply(List<Object> input) {
-                            postProgressEvent(6);
-                            List<File> deletedFiles = (List<File>) input.get(0);
-                            List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(1));
+                @Override
+                public Outcome apply(List<Object> input) {
+                    postProgressEvent(6);
+                    List<File> deletedFiles = (List<File>) input.get(0);
+                    List<Song> downloadedSongs = Lists.newArrayList((List<Song>) input.get(1));
 
-                            int deletions = deletedFiles.size();
-                            int totalDownloads = downloadedSongs.size();
-                            downloadedSongs.retainAll(Collections.singleton(null));
-                            int failedDownloads = downloadedSongs.size();
-                            int successfulDownloads = totalDownloads - failedDownloads;
+                    int deletions = deletedFiles.size();
+                    int totalDownloads = downloadedSongs.size();
+                    downloadedSongs.retainAll(Collections.singleton(null));
+                    int failedDownloads = downloadedSongs.size();
+                    int successfulDownloads = totalDownloads - failedDownloads;
 
-                            return new Outcome(deletions, successfulDownloads, failedDownloads);
-                        }
-                    }
-            );
+                    return new Outcome(deletions, successfulDownloads, failedDownloads);
+                }
+            });
 
             Outcome outcome = outcomeFuture.get();
-            bus.post(new SyncProcessFinishedEvent(this, config, outcome));
+            poster.postBusOnly(new SyncProcessFinishedEvent(this, config, outcome));
+            poster.postCompleted();
             return outcome;
         } catch (Exception e) {
-            bus.post(new SyncProcessFinishedWithErrorEvent(this, config, e));
+            poster.postBusOnly(new SyncProcessFinishedWithErrorEvent(this, config, e));
+            poster.postError(e);
             throw e;
         }
     }
 
     private void postProgressEvent(int step) {
-        bus.post(new SyncProcessProgressChangedEvent(SyncTask.this, config, step, NUM_STEPS));
+        SyncProcessProgressChangedEvent event = new SyncProcessProgressChangedEvent(SyncTask.this,
+                config,
+                step,
+                NUM_STEPS);
+
+        poster.post(event);
+    }
+
+    public Observable<TaskEvent> getEventObservable() {
+        return subject.asObservable();
     }
 }

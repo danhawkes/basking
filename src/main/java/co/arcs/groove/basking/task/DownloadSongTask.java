@@ -1,7 +1,6 @@
 package co.arcs.groove.basking.task;
 
 import com.belladati.httpclientandroidlib.HttpResponse;
-import com.google.common.eventbus.EventBus;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.ID3v22Tag;
 import com.mpatric.mp3agic.ID3v23Tag;
@@ -15,7 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.Semaphore;
 
-import co.arcs.groove.basking.SyncService;
+import co.arcs.groove.basking.SyncOperation;
 import co.arcs.groove.basking.Utils;
 import co.arcs.groove.basking.event.Events.DownloadSongFinishedEvent;
 import co.arcs.groove.basking.event.Events.DownloadSongProgressChangedEvent;
@@ -25,7 +24,7 @@ import co.arcs.groove.thresher.Song;
 
 public class DownloadSongTask implements Task<Song> {
 
-    private final EventBus bus;
+    private final EventPoster bus;
     private final Client client;
     private final Song song;
     private final File syncFile;
@@ -43,7 +42,7 @@ public class DownloadSongTask implements Task<Song> {
      *         A semaphore the task will acquire and hold while downloading the song. This is used
      *         to control the number of concurrently running download tasks.
      */
-    public DownloadSongTask(EventBus bus,
+    public DownloadSongTask(EventPoster bus,
             Client client,
             Song song,
             File targetFile,
@@ -66,9 +65,9 @@ public class DownloadSongTask implements Task<Song> {
             bus.post(new DownloadSongStartedEvent(this, song));
 
             File tempFile = new File(tempPath,
-                    syncFile.getName() + SyncService.TEMP_FILE_EXTENSION_1);
+                    syncFile.getName() + SyncOperation.TEMP_FILE_EXTENSION_1);
             File tempFile2 = new File(tempPath,
-                    syncFile.getName() + SyncService.TEMP_FILE_EXTENSION_2);
+                    syncFile.getName() + SyncOperation.TEMP_FILE_EXTENSION_2);
 
             // Download file
             InputStream is = null;

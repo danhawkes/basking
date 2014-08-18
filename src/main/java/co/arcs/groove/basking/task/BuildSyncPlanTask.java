@@ -4,7 +4,6 @@ import com.beust.jcommander.internal.Maps;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.EventBus;
 import com.google.common.io.CharStreams;
 
 import java.io.BufferedInputStream;
@@ -21,7 +20,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import co.arcs.groove.basking.SyncService;
+import co.arcs.groove.basking.SyncOperation;
 import co.arcs.groove.basking.Utils;
 import co.arcs.groove.basking.event.Events.BuildSyncPlanFinishedEvent;
 import co.arcs.groove.basking.event.Events.BuildSyncPlanProgressChangedEvent;
@@ -110,7 +109,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
     }
 
     public static final String CACHE_FILENAME = WriteCacheFileTask.CACHE_FILENAME;
-    private final EventBus bus;
+    private final EventPoster bus;
     private final File syncDir;
     private final Set<Song> songs;
 
@@ -124,7 +123,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
      * @param songs
      *         The songs that {@code syncDir} should contain.
      */
-    public BuildSyncPlanTask(EventBus bus, File syncDir, Set<Song> songs) {
+    public BuildSyncPlanTask(EventPoster bus, File syncDir, Set<Song> songs) {
         this.bus = bus;
         this.syncDir = syncDir;
         this.songs = songs;
@@ -156,7 +155,7 @@ public class BuildSyncPlanTask implements Task<SyncPlan> {
 
             @Override
             public boolean accept(File arg0, String arg1) {
-                return !arg1.startsWith(".") && arg1.endsWith(SyncService.FINISHED_FILE_EXTENSION);
+                return !arg1.startsWith(".") && arg1.endsWith(SyncOperation.FINISHED_FILE_EXTENSION);
             }
         }));
 

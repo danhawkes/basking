@@ -27,7 +27,7 @@ public class Utils {
         String s = song.getArtistName() + " - " + song.getName();
         s = BLACKLIST.removeFrom(s);
         s = CharMatcher.WHITESPACE.trimAndCollapseFrom(s, ' ');
-        return s + SyncService.FINISHED_FILE_EXTENSION;
+        return s + SyncOperation.FINISHED_FILE_EXTENSION;
     }
 
     /**

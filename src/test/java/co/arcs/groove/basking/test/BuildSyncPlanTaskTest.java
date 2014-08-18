@@ -4,7 +4,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
-import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.InvalidDataException;
@@ -25,6 +24,7 @@ import java.util.Set;
 import co.arcs.groove.basking.Utils;
 import co.arcs.groove.basking.task.BuildSyncPlanTask;
 import co.arcs.groove.basking.task.BuildSyncPlanTask.SyncPlan;
+import co.arcs.groove.basking.task.EventPoster;
 import co.arcs.groove.thresher.Song;
 
 import static junit.framework.TestCase.assertEquals;
@@ -117,7 +117,7 @@ public class BuildSyncPlanTaskTest {
 
     @Test
     public void withSyncCache() throws Exception {
-        SyncPlan syncPlan = new BuildSyncPlanTask(new EventBus(), tempDir.getRoot(), songs).call();
+        SyncPlan syncPlan = new BuildSyncPlanTask(mock(EventPoster.class), tempDir.getRoot(), songs).call();
         assertEquals(EXPECTED_LEAVE, syncPlan.getToLeave());
         assertEquals(EXPECTED_DOWNLOAD, syncPlan.getToDownload());
         assertEquals(EXPECTED_DELETE, syncPlan.getToDelete());
@@ -126,7 +126,7 @@ public class BuildSyncPlanTaskTest {
     @Test
     public void withoutSyncCache() throws Exception {
         deleteSyncCacheFile();
-        SyncPlan syncPlan = new BuildSyncPlanTask(new EventBus(), tempDir.getRoot(), songs).call();
+        SyncPlan syncPlan = new BuildSyncPlanTask(mock(EventPoster.class), tempDir.getRoot(), songs).call();
         assertEquals(EXPECTED_LEAVE, syncPlan.getToLeave());
         assertEquals(EXPECTED_DOWNLOAD, syncPlan.getToDownload());
         assertEquals(EXPECTED_DELETE, syncPlan.getToDelete());
@@ -136,14 +136,14 @@ public class BuildSyncPlanTaskTest {
     public void withCacheIsFaster() throws Exception {
 
         long t0 = System.currentTimeMillis();
-        new BuildSyncPlanTask(new EventBus(), tempDir.getRoot(), songs).call();
+        new BuildSyncPlanTask(mock(EventPoster.class), tempDir.getRoot(), songs).call();
         long dtWithCache = System.currentTimeMillis() - t0;
 
         // Delete cache file before continuing
         deleteSyncCacheFile();
 
         long t1 = System.currentTimeMillis();
-        new BuildSyncPlanTask(new EventBus(), tempDir.getRoot(), songs).call();
+        new BuildSyncPlanTask(mock(EventPoster.class), tempDir.getRoot(), songs).call();
         long dtWithoutCache = System.currentTimeMillis() - t1;
 
         // This is a conservative estimate for when running on an SSD.

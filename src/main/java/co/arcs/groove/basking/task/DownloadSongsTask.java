@@ -1,7 +1,6 @@
 package co.arcs.groove.basking.task;
 
 import com.beust.jcommander.internal.Lists;
-import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -30,14 +29,14 @@ import co.arcs.groove.thresher.Song;
  */
 public class DownloadSongsTask implements Task<List<Song>> {
 
-    private final EventBus bus;
+    private final EventPoster bus;
     private final Client client;
     private final List<SyncPlan.Item> syncPlanItems;
     private final File tempPath;
     private final Semaphore concurrentJobsSemaphore;
     private final ListeningExecutorService executor;
 
-    public DownloadSongsTask(EventBus bus,
+    public DownloadSongsTask(EventPoster bus,
             Client client,
             ListeningExecutorService executor,
             File tempPath,
